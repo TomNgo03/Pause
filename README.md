@@ -8,7 +8,7 @@ The product asks three small questions:
 2. How much time do you need?
 3. Did you accomplish your intention?
 
-The repository contains a one-month, university-portfolio-ready MVP built with SwiftUI and SwiftData. It runs in **Prototype Mode** without special permissions and contains an entitlement-ready boundary for Apple's Family Controls, Managed Settings, and Device Activity frameworks.
+The repository contains a one-month, university-portfolio-ready MVP built with SwiftUI and SwiftData. It requires a verified account, while Screen Time shielding uses a prototype fallback when Apple's restricted Family Controls entitlement is unavailable.
 
 ## Current scope
 
@@ -27,6 +27,9 @@ The repository contains a one-month, university-portfolio-ready MVP built with S
 - Interactive focus rooms and preset encouragement reactions
 - Guided AI planning coach with a deterministic offline fallback
 - Supabase schema, row-level security, authentication client, and OpenAI Edge Function
+- Mandatory account gateway with email-code signup and password recovery
+- Google and Apple sign-in entry points
+- Keychain session restoration with refresh-token rotation
 
 ## Requirements
 
@@ -43,7 +46,7 @@ xcodegen generate
 open Pause.xcodeproj
 ```
 
-Select the `Pause` scheme and an iOS simulator. Prototype Mode requires no Screen Time entitlement.
+Select the `Pause` scheme and an iOS simulator. Create an account on first launch; Screen Time prototype behavior requires no restricted entitlement.
 
 The generated project intentionally has no restricted entitlement attached, so Prototype Mode can run immediately. For device-level shielding, configure the App Group and Family Controls capability in the Apple Developer portal, attach `Pause/Resources/Pause.entitlements`, enable the `PAUSE_SCREEN_TIME` compilation condition, and follow [docs/SCREEN_TIME_SETUP.md](docs/SCREEN_TIME_SETUP.md).
 
