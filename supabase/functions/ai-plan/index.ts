@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
           break_minutes: { type: "integer", minimum: 0, maximum: 20 },
           intention: { type: "string", enum: ["Reply to a message", "Find specific information", "Learn something", "View planned content", "Connect with someone", "Take a short break", "Other"] }
         }
-      }
+      } }
     }
   };
 
@@ -71,4 +71,3 @@ Deno.serve(async (req) => {
     return json(plan);
   } catch { return json({ error: "invalid_plan" }, 502); }
 });
-
