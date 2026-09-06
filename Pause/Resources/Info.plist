@@ -12,9 +12,9 @@
     <key>CFBundleVersion</key><string>1</string>
     <key>LSRequiresIPhoneOS</key><true/>
     <key>UILaunchScreen</key><dict/>
-    <key>SUPABASE_URL</key><string></string>
+    <key>SUPABASE_URL</key><string>https://zbfvjtxfvdlnjleozlid.supabase.co</string>
     <key>SUPABASE_ANON_KEY</key><string></string>
-    <key>PAUSE_AI_ENDPOINT</key><string></string>
+    <key>PAUSE_AI_ENDPOINT</key><string>https://zbfvjtxfvdlnjleozlid.supabase.co/functions/v1/ai-plan</string>
     <key>UISupportedInterfaceOrientations</key>
     <array><string>UIInterfaceOrientationPortrait</string></array>
 </dict>

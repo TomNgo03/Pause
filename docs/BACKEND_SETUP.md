@@ -2,6 +2,8 @@
 
 The iOS app includes a fully interactive local Demo Mode. Production accounts, cross-device social state, and AI calls use a Supabase project and Edge Function.
 
+Configured project reference: `zbfvjtxfvdlnjleozlid`. The public project URL and AI function endpoint are already included in `Info.plist`; the client publishable key is intentionally not committed.
+
 ## Setup
 
 1. Create a Supabase project intended only for this pilot.
