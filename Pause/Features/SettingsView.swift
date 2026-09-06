@@ -10,8 +10,8 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("Mode") {
-                LabeledContent("Current mode", value: model.screenTime.modeDescription)
+            Section("App protection") {
+                LabeledContent("Protection", value: model.screenTime.modeDescription)
                 Button("Request Screen Time authorization") {
                     Task { do { try await model.screenTime.requestAuthorization() } catch { model.presentError(error.localizedDescription) } }
                 }

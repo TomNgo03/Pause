@@ -35,8 +35,7 @@ struct AIPlannerView: View {
         }
         .scrollContentBackground(.hidden)
         .background(PauseBackground())
-        .navigationTitle("AI Planning Coach")
-        .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Home") { model.route = .home } } }
+        .navigationTitle("Planning coach").navigationBarTitleDisplayMode(.large)
     }
 
     @ViewBuilder private func planSection(_ plan: AIPlan) -> some View {

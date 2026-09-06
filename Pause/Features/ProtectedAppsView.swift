@@ -36,7 +36,7 @@ struct ProtectedAppsView: View {
     var body: some View {
         List {
             Section {
-                Text("Prototype Mode demonstrates the planning experience but cannot shield other apps. Enable the Screen Time build after Apple capability setup.")
+                Text("This simulator preview demonstrates planning but cannot shield other apps. Enable Apple Screen Time capabilities for testing on a physical iPhone.")
                     .foregroundStyle(.secondary)
             }
             Section("Simulated categories") {
@@ -55,4 +55,3 @@ struct ProtectedAppsView: View {
     }
 }
 #endif
-

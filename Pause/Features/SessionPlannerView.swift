@@ -26,7 +26,7 @@ struct SessionPlannerView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Choose the closest answer. It does not need to be perfect.").foregroundStyle(.secondary).padding(.bottom, 4)
             ForEach(IntentionCategory.allCases) { item in
-                Button { intention = item } label: { HStack(spacing: 13) { PauseIcon(systemName: icon(for: item), color: color(for: item), size: 42); Text(item.rawValue).font(.headline).foregroundStyle(.primary); Spacer(); Image(systemName: intention == item ? "checkmark.circle.fill" : "circle").foregroundStyle(intention == item ? PauseTheme.indigo : .secondary) }.padding(14).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 19)).overlay(RoundedRectangle(cornerRadius: 19).stroke(intention == item ? PauseTheme.indigo : .clear, lineWidth: 2)) }.buttonStyle(.plain)
+                Button { intention = item } label: { HStack(spacing: 13) { PauseIcon(systemName: icon(for: item), color: color(for: item), size: 42); Text(item.rawValue).font(.headline).foregroundStyle(.primary); Spacer(); Image(systemName: intention == item ? "checkmark.circle.fill" : "circle").foregroundStyle(intention == item ? PauseTheme.indigo : .secondary) }.padding(14).background(PauseTheme.card, in: RoundedRectangle(cornerRadius: 19)).overlay(RoundedRectangle(cornerRadius: 19).stroke(intention == item ? PauseTheme.indigo : .white.opacity(0.06), lineWidth: intention == item ? 2 : 1)) }.buttonStyle(.plain)
             }
         }
     }

@@ -8,9 +8,18 @@ struct ProfileView: View {
 
     var body: some View {
         Form {
+            Section {
+                VStack(spacing: 12) {
+                    Circle().fill(PauseTheme.heroGradient).frame(width: 92, height: 92)
+                        .overlay(Text(String((name.isEmpty ? "P" : name).prefix(1))).font(.system(size: 36, weight: .bold)))
+                        .overlay(Circle().stroke(.white.opacity(0.18), lineWidth: 3))
+                    Text(name.isEmpty ? "Your Pause profile" : name).font(.title2.bold())
+                    Text(model.auth.user?.email ?? "Private account").font(.subheadline).foregroundStyle(.secondary)
+                }.frame(maxWidth: .infinity).listRowBackground(Color.clear).padding(.vertical, 12)
+            }
             Section("Account") {
                 if let user = model.auth.user {
-                    LabeledContent("Signed in", value: user.email ?? "Private account")
+                    LabeledContent("Account email", value: user.email ?? "Private account")
                     Button("Log out", role: .destructive) {
                         Task { await model.auth.signOut() }
                     }
@@ -22,7 +31,7 @@ struct ProfileView: View {
                 Button("Save profile") { model.social.updateProfile(name: name, intention: intention.isEmpty ? nil : intention) }
             }
             Section("Friend code") {
-                Text(model.social.profile.friendCode).font(.title2.monospaced().bold()).textSelection(.enabled)
+                Text(model.social.profile.friendCode).font(.title.monospaced().bold()).foregroundStyle(PauseTheme.mint).textSelection(.enabled)
                 Text("Share this code only with people you know. Pause has no public people search.").font(.footnote).foregroundStyle(.secondary)
             }
             Section("Safety") {

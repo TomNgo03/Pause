@@ -10,6 +10,7 @@ struct SocialHubView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 header
+                friendStrip
                 dailyIntention
                 circles
                 rooms
@@ -37,10 +38,34 @@ struct SocialHubView: View {
         }
     }
 
-    private var dailyIntention: some View {
-        GroupBox("Today’s optional intention") {
-            Text(store.profile.dailyIntention ?? "Nothing shared today").frame(maxWidth: .infinity, alignment: .leading).padding(.top, 4)
+    private var friendStrip: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 16) {
+                Button { showingFriend = true } label: {
+                    VStack(spacing: 7) {
+                        Circle().fill(PauseTheme.elevated).frame(width: 62, height: 62)
+                            .overlay(Image(systemName: "plus").font(.title2.bold()))
+                            .overlay(Circle().stroke(style: StrokeStyle(lineWidth: 2, dash: [4])).foregroundStyle(PauseTheme.indigo))
+                        Text("Add friend").font(.caption)
+                    }
+                }.buttonStyle(.plain)
+                ForEach(store.friends) { friend in
+                    VStack(spacing: 7) {
+                        Circle().fill(PauseTheme.socialGradient).frame(width: 66, height: 66)
+                            .overlay(Circle().fill(PauseTheme.background).padding(3))
+                            .overlay(Text(String(friend.displayName.prefix(1))).font(.title2.bold()))
+                        Text(friend.displayName).font(.caption).lineLimit(1).frame(width: 68)
+                    }
+                }
+            }.padding(.horizontal, 2)
         }
+    }
+
+    private var dailyIntention: some View {
+        PauseCard { HStack(spacing: 14) {
+            PauseIcon(systemName: "quote.opening", color: PauseTheme.mint)
+            VStack(alignment: .leading, spacing: 4) { Text("Today’s intention").font(.caption.bold()).foregroundStyle(PauseTheme.mint); Text(store.profile.dailyIntention ?? "Nothing shared today").font(.headline) }
+        } }
     }
 
     private var circles: some View {
@@ -111,7 +136,7 @@ struct SocialHubView: View {
 }
 
 private extension View {
-    func card() -> some View { self.frame(maxWidth: .infinity, alignment: .leading).padding(16).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous)).overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(.white.opacity(0.35), lineWidth: 0.6)).shadow(color: PauseTheme.ink.opacity(0.05), radius: 14, y: 7) }
+    func card() -> some View { self.frame(maxWidth: .infinity, alignment: .leading).padding(16).background(PauseTheme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous)).overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(.white.opacity(0.08), lineWidth: 0.7)).shadow(color: .black.opacity(0.18), radius: 16, y: 8) }
 }
 
 private struct AddFriendSheet: View {
