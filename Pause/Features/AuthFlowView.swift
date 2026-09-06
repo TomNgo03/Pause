@@ -71,6 +71,8 @@ struct AuthFlowView: View {
             }
             .padding(.bottom, 10)
 
+            socialButtons
+            divider
             Button("Create new account") { move(to: .signUp) }.buttonStyle(PrimaryButtonStyle())
             Button("Log in") { move(to: .signIn) }.buttonStyle(SoftButtonStyle())
 
@@ -81,6 +83,8 @@ struct AuthFlowView: View {
 
     private var signIn: some View {
         authCard(title: "Welcome back", subtitle: "Log in to continue to your Pause space.") {
+            socialButtons
+            divider
             emailField
             passwordField(label: "Password", value: $password)
             HStack {
@@ -92,6 +96,40 @@ struct AuthFlowView: View {
             submitButton("Log in") { try await model.auth.signIn(email: email, password: password) }
             prompt("New to Pause?", action: "Create account") { move(to: .signUp) }
         }
+    }
+
+    private var socialButtons: some View {
+        VStack(spacing: 11) {
+            socialButton(title: "Continue with Apple", icon: "apple.logo", provider: "apple", dark: true)
+            socialButton(title: "Continue with Google", icon: "g.circle.fill", provider: "google", dark: false)
+        }
+    }
+
+    private var divider: some View {
+        HStack {
+            Rectangle().fill(Color.secondary.opacity(0.25)).frame(height: 1)
+            Text("or").font(.caption).foregroundStyle(.secondary)
+            Rectangle().fill(Color.secondary.opacity(0.25)).frame(height: 1)
+        }
+    }
+
+    private func socialButton(title: String, icon: String, provider: String, dark: Bool) -> some View {
+        Button {
+            Task {
+                errorMessage = nil
+                do { try await model.auth.signInWithOAuth(provider: provider) }
+                catch AuthError.cancelled { }
+                catch { errorMessage = error.localizedDescription }
+            }
+        } label: {
+            Label(title, systemImage: icon).font(.headline).frame(maxWidth: .infinity).padding(.vertical, 14)
+                .foregroundStyle(dark ? Color.white : Color.primary)
+                .background(dark ? Color.black : Color(uiColor: .systemBackground),
+                            in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).stroke(Color.primary.opacity(dark ? 0 : 0.14)))
+        }
+        .disabled(model.auth.isLoading)
+        .accessibilityHint("Opens a secure \(provider.capitalized) sign-in page")
     }
 
     private var signUp: some View {

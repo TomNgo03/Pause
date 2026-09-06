@@ -1,5 +1,7 @@
 import Foundation
 import Security
+import AuthenticationServices
+import UIKit
 
 struct AuthUser: Codable, Equatable {
     let id: UUID
@@ -35,6 +37,7 @@ final class AuthService: ObservableObject {
     var isConfigured: Bool { configuration != nil }
 
     private var session: AuthSession?
+    private var webAuthenticationSession: ASWebAuthenticationSession?
     private var configuration: (url: URL, key: String)? {
         guard let value = Bundle.main.object(forInfoDictionaryKey: "SUPABASE_URL") as? String,
               let url = URL(string: value), !value.isEmpty,
@@ -88,6 +91,31 @@ final class AuthService: ObservableObject {
                 body: ["email": email.normalizedEmail, "password": password]
             )
             self.accept(signedIn)
+        }
+    }
+
+    func signInWithOAuth(provider: String) async throws {
+        guard ["google", "apple"].contains(provider) else { throw AuthError.unsupportedProvider }
+        guard let configuration else { throw AuthError.notConfigured }
+        var components = URLComponents(url: configuration.url.appendingPathComponent("auth/v1/authorize"), resolvingAgainstBaseURL: false)
+        components?.queryItems = [
+            URLQueryItem(name: "provider", value: provider),
+            URLQueryItem(name: "redirect_to", value: "pause://auth-callback")
+        ]
+        guard let url = components?.url else { throw AuthError.notConfigured }
+
+        try await performLoading {
+            let callbackURL = try await self.openAuthenticationSession(url: url)
+            let values = callbackURL.authParameters
+            if let message = values["error_description"]?.replacingOccurrences(of: "+", with: " ") {
+                throw AuthError.server(message)
+            }
+            guard let accessToken = values["access_token"], let refreshToken = values["refresh_token"] else {
+                throw AuthError.invalidCallback
+            }
+            let user: AuthUser = try await self.request(path: "user", method: "GET", body: nil, bearerToken: accessToken)
+            self.accept(AuthSession(accessToken: accessToken, refreshToken: refreshToken,
+                                    expiresAt: values["expires_at"].flatMap(TimeInterval.init), user: user))
         }
     }
 
@@ -161,7 +189,7 @@ final class AuthService: ObservableObject {
     private func request<Response: Decodable>(
         path: String,
         method: String = "POST",
-        body: [String: String],
+        body: [String: String]?,
         bearerToken: String? = nil
     ) async throws -> Response {
         guard let configuration else { throw AuthError.notConfigured }
@@ -172,7 +200,7 @@ final class AuthService: ObservableObject {
         request.setValue(configuration.key, forHTTPHeaderField: "apikey")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if let bearerToken { request.setValue("Bearer \(bearerToken)", forHTTPHeaderField: "Authorization") }
-        request.httpBody = try JSONEncoder().encode(body)
+        if let body { request.httpBody = try JSONEncoder().encode(body) }
         let (data, response) = try await URLSession.shared.data(for: request)
         try validate(response: response, data: data)
         if Response.self == EmptyResponse.self, data.isEmpty { return EmptyResponse() as! Response }
@@ -184,6 +212,27 @@ final class AuthService: ObservableObject {
         guard (200..<300).contains(http.statusCode) else {
             let message = (try? JSONDecoder().decode(ServerError.self, from: data).displayMessage)
             throw AuthError.server(message ?? "We couldn't complete that request. Please try again.")
+        }
+    }
+
+    private func openAuthenticationSession(url: URL) async throws -> URL {
+        try await withCheckedThrowingContinuation { continuation in
+            let session = ASWebAuthenticationSession(url: url, callbackURLScheme: "pause") { [weak self] callback, error in
+                self?.webAuthenticationSession = nil
+                if let callback { continuation.resume(returning: callback) }
+                else if let authenticationError = error as? ASWebAuthenticationSessionError,
+                        authenticationError.code == .canceledLogin {
+                    continuation.resume(throwing: AuthError.cancelled)
+                } else { continuation.resume(throwing: error ?? AuthError.invalidCallback) }
+            }
+            session.presentationContextProvider = WebAuthenticationPresenter.shared
+            session.prefersEphemeralWebBrowserSession = false
+            webAuthenticationSession = session
+            guard session.start() else {
+                webAuthenticationSession = nil
+                continuation.resume(throwing: AuthError.invalidCallback)
+                return
+            }
         }
     }
 
@@ -200,7 +249,8 @@ final class AuthService: ObservableObject {
 private struct EmptyResponse: Decodable { init() {} }
 
 enum AuthError: LocalizedError {
-    case notConfigured, invalidEmail, weakPassword, invalidCode, sessionExpired, network, server(String)
+    case notConfigured, invalidEmail, weakPassword, invalidCode, sessionExpired, network
+    case unsupportedProvider, invalidCallback, cancelled, server(String)
     var errorDescription: String? {
         switch self {
         case .notConfigured: "Pause cannot connect to its account service."
@@ -209,8 +259,30 @@ enum AuthError: LocalizedError {
         case .invalidCode: "Enter the six-digit code from your email."
         case .sessionExpired: "Your secure session expired. Please sign in again."
         case .network: "Pause could not reach the account service. Check your connection and try again."
+        case .unsupportedProvider: "That sign-in provider is not supported."
+        case .invalidCallback: "The sign-in response was incomplete. Please try again."
+        case .cancelled: "Sign-in was cancelled."
         case let .server(message): message
         }
+    }
+}
+
+private extension URL {
+    var authParameters: [String: String] {
+        let source = fragment.map { "?\($0)" } ?? "?\(query ?? "")"
+        return Dictionary(uniqueKeysWithValues: (URLComponents(string: source)?.queryItems ?? []).compactMap {
+            guard let value = $0.value else { return nil }
+            return ($0.name, value)
+        })
+    }
+}
+
+@MainActor
+private final class WebAuthenticationPresenter: NSObject, ASWebAuthenticationPresentationContextProviding {
+    static let shared = WebAuthenticationPresenter()
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows).first(where: \.isKeyWindow) ?? ASPresentationAnchor()
     }
 }
 

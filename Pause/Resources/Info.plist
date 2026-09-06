@@ -10,6 +10,13 @@
     <key>CFBundlePackageType</key><string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
     <key>CFBundleShortVersionString</key><string>1.0</string>
     <key>CFBundleVersion</key><string>1</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key><string>org.pauseproject.app.auth</string>
+            <key>CFBundleURLSchemes</key><array><string>pause</string></array>
+        </dict>
+    </array>
     <key>LSRequiresIPhoneOS</key><true/>
     <key>UILaunchScreen</key><dict/>
     <key>SUPABASE_URL</key><string>https://zbfvjtxfvdlnjleozlid.supabase.co</string>
