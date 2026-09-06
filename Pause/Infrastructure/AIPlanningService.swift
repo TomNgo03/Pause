@@ -12,12 +12,20 @@ struct AIPlanningService {
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        guard let token = SessionTokenStore.load() else { return try PlanValidator.validate(offlinePlan(request), availableMinutes: request.availableMinutes) }
+        guard let token = SessionTokenStore.load()?.accessToken else {
+            return try PlanValidator.validate(offlinePlan(request), availableMinutes: request.availableMinutes)
+        }
         urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         urlRequest.httpBody = try JSONEncoder.pause.encode(request)
-        let (data, response) = try await session.data(for: urlRequest)
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else { throw PlanningError.serverUnavailable }
-        return try PlanValidator.validate(JSONDecoder.pause.decode(AIPlan.self, from: data), availableMinutes: request.availableMinutes)
+        do {
+            let (data, response) = try await session.data(for: urlRequest)
+            guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+                return try PlanValidator.validate(offlinePlan(request), availableMinutes: request.availableMinutes)
+            }
+            return try PlanValidator.validate(JSONDecoder.pause.decode(AIPlan.self, from: data), availableMinutes: request.availableMinutes)
+        } catch {
+            return try PlanValidator.validate(offlinePlan(request), availableMinutes: request.availableMinutes)
+        }
     }
 
     func offlinePlan(_ request: AIPlanRequest) -> AIPlan {
