@@ -8,7 +8,7 @@ struct SocialHubView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 22) {
+            LazyVStack(alignment: .leading, spacing: 22) {
                 header
                 friendStrip
                 dailyIntention
@@ -136,7 +136,7 @@ struct SocialHubView: View {
 }
 
 private extension View {
-    func card() -> some View { self.frame(maxWidth: .infinity, alignment: .leading).padding(16).background(PauseTheme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous)).overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(.white.opacity(0.08), lineWidth: 0.7)).shadow(color: .black.opacity(0.18), radius: 16, y: 8) }
+    func card() -> some View { self.frame(maxWidth: .infinity, alignment: .leading).padding(16).background(PauseTheme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous)).overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(.white.opacity(0.08), lineWidth: 0.7)) }
 }
 
 private struct AddFriendSheet: View {

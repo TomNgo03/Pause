@@ -11,7 +11,7 @@ struct HomeView: View {
         ZStack {
             PauseBackground()
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 26) {
+                LazyVStack(alignment: .leading, spacing: 26) {
                     header
                     dailyHero
                     if sessions.isEmpty && !hideGettingStarted { gettingStarted }
@@ -31,7 +31,7 @@ struct HomeView: View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) { Text(greeting).font(.subheadline).foregroundStyle(.secondary); Text(model.social.profile.displayName).font(.title2.weight(.heavy)) }
             Spacer()
-            Button { showingHelp = true } label: { Image(systemName: "questionmark").font(.headline).frame(width: 42, height: 42).background(.thinMaterial, in: Circle()) }.accessibilityLabel("How Pause works")
+            Button { showingHelp = true } label: { Image(systemName: "questionmark").font(.headline).frame(width: 42, height: 42).background(PauseTheme.elevated, in: Circle()) }.accessibilityLabel("How Pause works")
             Button { model.route = .profile } label: {
                 Circle().fill(PauseTheme.heroGradient).frame(width: 44, height: 44)
                     .overlay(Text(String(model.social.profile.displayName.prefix(1))).font(.headline).foregroundStyle(.white))
@@ -61,7 +61,7 @@ struct HomeView: View {
             }.padding(24)
         }
         .frame(height: 220).clipped().clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-        .shadow(color: PauseTheme.indigo.opacity(0.34), radius: 24, y: 12)
+        .shadow(color: PauseTheme.indigo.opacity(0.24), radius: 10, y: 6)
     }
 
     private var gettingStarted: some View {

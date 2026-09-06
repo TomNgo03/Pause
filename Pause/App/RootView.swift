@@ -64,7 +64,7 @@ private struct PauseTabBar: View {
         HStack(spacing: 2) {
             ForEach(tabs, id: \.1) { route, label, icon in
                 Button {
-                    withAnimation(.snappy(duration: 0.25)) { selection = route }
+                    selection = route
                 } label: {
                     VStack(spacing: 4) {
                         Image(systemName: icon).font(.system(size: 19, weight: .semibold))
@@ -80,7 +80,7 @@ private struct PauseTabBar: View {
             }
         }
         .padding(.horizontal, 10).padding(.vertical, 7)
-        .background(.ultraThinMaterial)
+        .background(PauseTheme.card)
         .overlay(alignment: .top) { Rectangle().fill(.white.opacity(0.08)).frame(height: 0.5) }
     }
 }

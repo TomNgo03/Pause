@@ -12,7 +12,7 @@ struct DashboardView: View {
         ZStack {
             PauseBackground()
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 22) {
+                LazyVStack(alignment: .leading, spacing: 22) {
                     header(summary); metrics(summary); chart; insight(summary)
                     Label("These patterns are descriptive—not a measure of addiction, worth, productivity, grades, or mental health.", systemImage: "info.circle").font(.caption).foregroundStyle(.secondary).padding(.horizontal, 4)
                 }.padding(20).padding(.bottom, 20)

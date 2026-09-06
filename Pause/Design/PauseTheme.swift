@@ -18,9 +18,8 @@ struct PauseBackground: View {
     var body: some View {
         ZStack {
             PauseTheme.background.ignoresSafeArea()
-            Circle().fill(PauseTheme.violet.opacity(0.19)).frame(width: 360).blur(radius: 70).offset(x: 190, y: -360)
-            Circle().fill(PauseTheme.indigo.opacity(0.14)).frame(width: 320).blur(radius: 80).offset(x: -190, y: 220)
-            Circle().fill(PauseTheme.mint.opacity(0.06)).frame(width: 260).blur(radius: 75).offset(x: 170, y: 430)
+            RadialGradient(colors: [PauseTheme.violet.opacity(0.18), .clear], center: .topTrailing, startRadius: 0, endRadius: 430).ignoresSafeArea()
+            RadialGradient(colors: [PauseTheme.indigo.opacity(0.11), .clear], center: .bottomLeading, startRadius: 0, endRadius: 480).ignoresSafeArea()
         }.accessibilityHidden(true)
     }
 }
@@ -32,7 +31,7 @@ struct PauseCard<Content: View>: View {
         content.frame(maxWidth: .infinity, alignment: .leading).padding(padding)
             .background(PauseTheme.card.opacity(0.92), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(.white.opacity(0.08), lineWidth: 0.8))
-            .shadow(color: .black.opacity(0.22), radius: 20, y: 10)
+            .shadow(color: .black.opacity(0.16), radius: 8, y: 4)
     }
 }
 
@@ -68,7 +67,7 @@ struct PrimaryButtonStyle: ButtonStyle {
         configuration.label.font(.headline).frame(maxWidth: .infinity).padding(.vertical, 16)
             .foregroundStyle(.white).background(PauseTheme.heroGradient, in: RoundedRectangle(cornerRadius: 17, style: .continuous))
             .opacity(configuration.isPressed ? 0.78 : 1)
-            .shadow(color: PauseTheme.indigo.opacity(configuration.isPressed ? 0.16 : 0.38), radius: 18, y: 9)
+            .shadow(color: PauseTheme.indigo.opacity(configuration.isPressed ? 0.12 : 0.26), radius: 9, y: 5)
             .scaleEffect(configuration.isPressed ? 0.98 : 1).animation(.easeOut(duration: 0.16), value: configuration.isPressed)
     }
 }

@@ -13,7 +13,7 @@ struct SessionPlannerView: View {
             VStack(spacing: 0) {
                 progress
                 ScrollView { Group { if step == 0 { intentionStep } else { timeStep } }.padding(20) }
-                footer.padding(20).background(.ultraThinMaterial)
+                footer.padding(20).background(PauseTheme.card)
             }
         }
         .navigationTitle(step == 0 ? "What is your intention?" : "How long do you need?").navigationBarTitleDisplayMode(.inline)
@@ -35,7 +35,7 @@ struct SessionPlannerView: View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Start smaller than you think. You can add time later without it counting as a failure.").foregroundStyle(.secondary)
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                ForEach(durations, id: \.self) { value in Button { duration = value } label: { VStack(spacing: 4) { Text("\(value)").font(.title.bold()); Text("minutes").font(.caption) }.frame(maxWidth: .infinity).padding(.vertical, 18).foregroundStyle(duration == value ? .white : .primary).background(duration == value ? AnyShapeStyle(PauseTheme.heroGradient) : AnyShapeStyle(Material.regular), in: RoundedRectangle(cornerRadius: 18)) }.buttonStyle(.plain) }
+                ForEach(durations, id: \.self) { value in Button { duration = value } label: { VStack(spacing: 4) { Text("\(value)").font(.title.bold()); Text("minutes").font(.caption) }.frame(maxWidth: .infinity).padding(.vertical, 18).foregroundStyle(duration == value ? .white : .primary).background(duration == value ? AnyShapeStyle(PauseTheme.heroGradient) : AnyShapeStyle(PauseTheme.card), in: RoundedRectangle(cornerRadius: 18)) }.buttonStyle(.plain) }
             }
             if let intention { PauseCard { Label("\(intention.rawValue) for \(duration) minutes", systemImage: "checkmark.seal.fill").font(.headline).foregroundStyle(PauseTheme.indigo) } }
         }
