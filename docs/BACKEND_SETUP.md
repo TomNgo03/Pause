@@ -5,7 +5,7 @@ Pause uses Supabase project `zbfvjtxfvdlnjleozlid`. The app has no guest or demo
 ## Already implemented
 
 - Email/password login
-- Verified signup using a six-digit email code
+- Simple email/password signup for the one-month MVP
 - Forgot-password recovery using a six-digit email code
 - Secure access and rotating refresh-token storage in the iOS Keychain
 - Session restoration at launch and server-side logout
@@ -25,13 +25,11 @@ Open **Authentication → URL Configuration** and add this Redirect URL exactly:
 pause://auth-callback
 ```
 
-### 2. Six-digit signup email
+### 2. Simple signup setting
 
-Open **Authentication → Emails → Templates → Confirm signup**.
+Open **Authentication → Sign In / Providers → Email** and turn **Confirm email** off.
 
-- Subject: `Your Pause verification code`
-- Replace the body with [`supabase/templates/confirmation.html`](../supabase/templates/confirmation.html).
-- Confirm that the body contains `{{ .Token }}`, not only `{{ .ConfirmationURL }}`.
+This lets a new user enter an email and password and begin immediately. It is appropriate for the controlled MVP demonstration, but email verification should be restored before a public launch. The future verification template is preserved in [`supabase/templates/confirmation.html`](../supabase/templates/confirmation.html).
 
 ### 3. Six-digit password-reset email
 
@@ -71,7 +69,7 @@ For a classroom pilot, Supabase's default mail sender is sufficient but rate-lim
 
 1. Delete Pause from the simulator to clear old prototype preferences, then reinstall.
 2. Confirm the welcome screen appears and no app feature can be opened without authentication.
-3. Create an account and enter the emailed six-digit code.
+3. Create an account and confirm the app opens immediately.
 4. Complete onboarding, log out, and log back in with the password.
 5. Force-quit and relaunch; verify the session is restored.
 6. Request a password reset, enter its code, set a new password, and log in with it.

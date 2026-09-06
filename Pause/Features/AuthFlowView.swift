@@ -9,7 +9,7 @@ struct AuthFlowView: View {
     @State private var code = ""
     @State private var errorMessage: String?
 
-    private enum Screen { case welcome, signIn, signUp, signupCode, forgotPassword, recoveryCode }
+    private enum Screen { case welcome, signIn, signUp, forgotPassword, recoveryCode }
 
     var body: some View {
         NavigationStack {
@@ -23,7 +23,6 @@ struct AuthFlowView: View {
                             case .welcome: welcome
                             case .signIn: signIn
                             case .signUp: signUp
-                            case .signupCode: codeEntry(purpose: .signup)
                             case .forgotPassword: forgotPassword
                             case .recoveryCode: codeEntry(purpose: .recovery)
                             }
@@ -133,17 +132,16 @@ struct AuthFlowView: View {
     }
 
     private var signUp: some View {
-        authCard(title: "Create your account", subtitle: "We'll email a six-digit code to verify it is really you.") {
+        authCard(title: "Create your account", subtitle: "Use your email and a secure password. You can start immediately.") {
             emailField
             passwordField(label: "Password", value: $password)
             passwordField(label: "Confirm password", value: $confirmation)
             Text("Use at least 8 characters. Never reuse a school or social-media password.")
                 .font(.caption).foregroundStyle(.secondary)
             statusMessage
-            submitButton("Send verification code") {
+            submitButton("Create account") {
                 guard password == confirmation else { throw LocalAuthError.passwordsDoNotMatch }
-                try await model.auth.requestSignupCode(email: email, password: password)
-                move(to: .signupCode, clearError: false)
+                try await model.auth.signUp(email: email, password: password)
             }
             prompt("Already have an account?", action: "Log in") { move(to: .signIn) }
         }
@@ -162,9 +160,8 @@ struct AuthFlowView: View {
     }
 
     private func codeEntry(purpose: AuthService.VerificationPurpose) -> some View {
-        let isRecovery = purpose == .recovery
         return authCard(
-            title: isRecovery ? "Choose a new password" : "Check your email",
+            title: "Choose a new password",
             subtitle: "Enter the six-digit code sent to \(email)."
         ) {
             TextField("000000", text: $code)
@@ -176,18 +173,12 @@ struct AuthFlowView: View {
                 .onChange(of: code) { _, value in code = String(value.filter(\.isNumber).prefix(6)) }
                 .pauseField()
                 .accessibilityLabel("Six-digit verification code")
-            if isRecovery {
-                passwordField(label: "New password", value: $password)
-                passwordField(label: "Confirm new password", value: $confirmation)
-            }
+            passwordField(label: "New password", value: $password)
+            passwordField(label: "Confirm new password", value: $confirmation)
             statusMessage
-            submitButton(isRecovery ? "Reset password" : "Verify and continue") {
-                if isRecovery {
-                    guard password == confirmation else { throw LocalAuthError.passwordsDoNotMatch }
-                    try await model.auth.resetPassword(email: email, code: code, newPassword: password)
-                } else {
-                    try await model.auth.verifyCode(email: email, code: code, purpose: .signup)
-                }
+            submitButton("Reset password") {
+                guard password == confirmation else { throw LocalAuthError.passwordsDoNotMatch }
+                try await model.auth.resetPassword(email: email, code: code, newPassword: password)
             }
             Button("Send a new code") {
                 Task { await resend(purpose: purpose) }
@@ -256,7 +247,7 @@ struct AuthFlowView: View {
     private func resend(purpose: AuthService.VerificationPurpose) async {
         errorMessage = nil
         do {
-            try await model.auth.resendCode(email: email, purpose: purpose)
+            try await model.auth.requestPasswordResetCode(email: email)
         } catch { errorMessage = error.localizedDescription }
     }
 
@@ -268,7 +259,6 @@ struct AuthFlowView: View {
 
     private func goBack() {
         switch screen {
-        case .signupCode: move(to: .signUp)
         case .recoveryCode: move(to: .forgotPassword)
         default: move(to: .welcome)
         }

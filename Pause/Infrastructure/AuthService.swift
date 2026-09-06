@@ -25,7 +25,7 @@ struct AuthSession: Codable, Equatable {
 @MainActor
 final class AuthService: ObservableObject {
     enum State: Equatable { case restoring, signedOut, signedIn(AuthUser) }
-    enum VerificationPurpose: String { case signup, recovery }
+    enum VerificationPurpose: String { case recovery }
 
     @Published private(set) var state: State = .restoring
     @Published private(set) var isLoading = false
@@ -60,14 +60,16 @@ final class AuthService: ObservableObject {
         } catch { clearSession() }
     }
 
-    /// Creates an unconfirmed account and sends the six-digit signup code.
-    func requestSignupCode(email: String, password: String) async throws {
+    /// Creates an account and signs in immediately when Confirm email is disabled in Supabase.
+    func signUp(email: String, password: String) async throws {
         try validate(email: email, password: password)
         try await performLoading {
-            let _: SignupResponse = try await self.request(
+            let response: SignupResponse = try await self.request(
                 path: "signup",
                 body: ["email": email.normalizedEmail, "password": password]
             )
+            guard let session = response.session else { throw AuthError.emailConfirmationEnabled }
+            self.accept(session)
         }
     }
 
@@ -124,20 +126,6 @@ final class AuthService: ObservableObject {
         guard email.isValidEmail else { throw AuthError.invalidEmail }
         try await performLoading {
             let _: EmptyResponse = try await self.request(path: "recover", body: ["email": email.normalizedEmail])
-        }
-    }
-
-    func resendCode(email: String, purpose: VerificationPurpose) async throws {
-        guard email.isValidEmail else { throw AuthError.invalidEmail }
-        if purpose == .recovery {
-            try await requestPasswordResetCode(email: email)
-            return
-        }
-        try await performLoading {
-            let _: EmptyResponse = try await self.request(
-                path: "resend",
-                body: ["email": email.normalizedEmail, "type": purpose.rawValue]
-            )
         }
     }
 
@@ -250,7 +238,22 @@ final class AuthService: ObservableObject {
         }
     }
 
-    private struct SignupResponse: Decodable { let id: UUID? }
+    private struct SignupResponse: Decodable {
+        let accessToken: String?
+        let refreshToken: String?
+        let expiresAt: TimeInterval?
+        let user: AuthUser?
+        var session: AuthSession? {
+            guard let accessToken, let refreshToken, let user else { return nil }
+            return AuthSession(accessToken: accessToken, refreshToken: refreshToken, expiresAt: expiresAt, user: user)
+        }
+        enum CodingKeys: String, CodingKey {
+            case accessToken = "access_token"
+            case refreshToken = "refresh_token"
+            case expiresAt = "expires_at"
+            case user
+        }
+    }
     private struct ServerError: Decodable {
         let msg: String?
         let message: String?
@@ -264,7 +267,7 @@ private struct EmptyResponse: Decodable { init() {} }
 
 enum AuthError: LocalizedError {
     case notConfigured, invalidEmail, weakPassword, invalidCode, sessionExpired, network
-    case unsupportedProvider, invalidCallback, cancelled, server(String)
+    case unsupportedProvider, invalidCallback, cancelled, emailConfirmationEnabled, server(String)
     var errorDescription: String? {
         switch self {
         case .notConfigured: "Pause cannot connect to its account service."
@@ -276,6 +279,7 @@ enum AuthError: LocalizedError {
         case .unsupportedProvider: "That sign-in provider is not supported."
         case .invalidCallback: "The sign-in response was incomplete. Please try again."
         case .cancelled: "Sign-in was cancelled."
+        case .emailConfirmationEnabled: "Turn off Confirm email in Supabase to use simple account creation."
         case let .server(message): message
         }
     }

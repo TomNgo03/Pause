@@ -27,7 +27,7 @@ The repository contains a one-month, university-portfolio-ready MVP built with S
 - Interactive focus rooms and preset encouragement reactions
 - Guided AI planning coach with a deterministic offline fallback
 - Supabase schema, row-level security, authentication client, and OpenAI Edge Function
-- Mandatory account gateway with email-code signup and password recovery
+- Mandatory account gateway with simple signup and code-based password recovery
 - Google and Apple sign-in entry points
 - Keychain session restoration with refresh-token rotation
 
