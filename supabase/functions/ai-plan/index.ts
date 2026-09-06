@@ -8,7 +8,8 @@ Deno.serve(async (req) => {
   const supabaseURL = Deno.env.get("SUPABASE_URL")!;
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const openAIKey = Deno.env.get("OPENAI_API_KEY")!;
+  const openAIKey = Deno.env.get("OPENAI_API_KEY");
+  const groqKey = Deno.env.get("GROQ_API_KEY");
   const model = Deno.env.get("OPENAI_MODEL") ?? "gpt-5.4-mini";
   const authorization = req.headers.get("Authorization") ?? "";
 
@@ -27,13 +28,17 @@ Deno.serve(async (req) => {
   const available = Math.max(10, Math.min(180, Number(input.availableMinutes ?? input.available_minutes ?? 30)));
   if (!task) return json({ error: "task_required" }, 400);
 
-  const moderation = await fetch("https://api.openai.com/v1/moderations", {
-    method: "POST", headers: { Authorization: `Bearer ${openAIKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: "omni-moderation-latest", input: task })
-  });
-  const moderationBody = await moderation.json();
-  if (!moderation.ok || moderationBody.results?.[0]?.flagged) {
-    return json({ error: "This planning request needs support beyond a productivity coach. Please talk with a trusted adult or qualified professional." }, 422);
+  if (!openAIKey && !groqKey) return json({ error: "model_not_configured" }, 503);
+
+  if (openAIKey) {
+    const moderation = await fetch("https://api.openai.com/v1/moderations", {
+      method: "POST", headers: { Authorization: `Bearer ${openAIKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "omni-moderation-latest", input: task })
+    });
+    const moderationBody = await moderation.json();
+    if (!moderation.ok || moderationBody.results?.[0]?.flagged) {
+      return json({ error: "This planning request needs support beyond a productivity coach. Please talk with a trusted adult or qualified professional." }, 422);
+    }
   }
 
   const schema = {
@@ -52,19 +57,42 @@ Deno.serve(async (req) => {
     }
   };
 
-  const aiResponse = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST", headers: { Authorization: `Bearer ${openAIKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model, store: false, max_output_tokens: 800, safety_identifier: `pause_${user.id}`,
-      instructions: "You are Pause Planning Coach for teenage students. Create a realistic editable productivity plan, not medical or mental-health advice. Protect sleep, meals, movement, safety, and urgent communication. Never shame, diagnose, or promise grades. Stay within the user's available time.",
-      input: JSON.stringify({ ...input, task, available_minutes: available }),
-      text: { format: { type: "json_schema", name: "pause_plan", strict: true, schema } }
-    })
-  });
-  const body = await aiResponse.json();
-  if (!aiResponse.ok || !body.output_text) return json({ error: "generation_failed" }, 502);
+  const safetyInstructions = "You are Pause Planning Coach for teenage students. Create a realistic editable productivity plan, not medical or mental-health advice. Protect sleep, meals, movement, safety, and urgent communication. Never shame, diagnose, or promise grades. Stay within the user's available time.";
+  let outputText: string | undefined;
+
+  if (groqKey) {
+    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST", headers: { Authorization: `Bearer ${groqKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-20b",
+        temperature: 0.2, max_completion_tokens: 800, response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: `${safetyInstructions} Return only JSON matching this schema: ${JSON.stringify(schema)}` },
+          { role: "user", content: JSON.stringify({ ...input, task, available_minutes: available }) }
+        ]
+      })
+    });
+    const groqBody = await groqResponse.json();
+    if (!groqResponse.ok) return json({ error: "generation_failed" }, 502);
+    outputText = groqBody.choices?.[0]?.message?.content;
+  } else if (openAIKey) {
+    const aiResponse = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST", headers: { Authorization: `Bearer ${openAIKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model, store: false, max_output_tokens: 800, safety_identifier: `pause_${user.id}`,
+        instructions: safetyInstructions,
+        input: JSON.stringify({ ...input, task, available_minutes: available }),
+        text: { format: { type: "json_schema", name: "pause_plan", strict: true, schema } }
+      })
+    });
+    const body = await aiResponse.json();
+    if (!aiResponse.ok) return json({ error: "generation_failed" }, 502);
+    outputText = body.output_text;
+  }
+
+  if (!outputText) return json({ error: "generation_failed" }, 502);
   try {
-    const plan = JSON.parse(body.output_text);
+    const plan = JSON.parse(outputText);
     const computed = plan.steps.reduce((sum: number, step: {duration_minutes:number; break_minutes:number}) => sum + step.duration_minutes + step.break_minutes, 0);
     if (computed > Math.min(180, available + 10)) return json({ error: "invalid_plan" }, 502);
     plan.total_minutes = computed;

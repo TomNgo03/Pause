@@ -62,7 +62,7 @@ For a classroom pilot, Supabase's default mail sender is sufficient but rate-lim
 
 1. Migration `001_pause_social.sql` is applied to the linked project.
 2. Edge Functions `ai-plan` and `delete-account` are deployed.
-3. Set `OPENAI_API_KEY` and optionally `OPENAI_MODEL` as Edge Function secrets.
+3. For a free classroom pilot, create a Groq API key and run `.tools/supabase secrets set GROQ_API_KEY=YOUR_KEY`. The function defaults to `openai/gpt-oss-20b`; override it with `GROQ_MODEL` if required. Alternatively set `OPENAI_API_KEY` and optionally `OPENAI_MODEL`.
 4. Before inviting pilot users, verify with two separate accounts that row-level security prevents either account from reading the other's private data.
 
 ## Manual acceptance test
