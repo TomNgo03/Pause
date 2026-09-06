@@ -5,25 +5,15 @@ struct ProfileView: View {
     @State private var name = ""
     @State private var intention = ""
     @State private var showingDelete = false
-    @State private var email = ""
-    @State private var password = ""
 
     var body: some View {
         Form {
             Section("Account") {
                 if let user = model.auth.user {
                     LabeledContent("Signed in", value: user.email ?? "Private account")
-                    Button("Sign out") { model.auth.signOut() }
-                } else if model.auth.isConfigured {
-                    TextField("Email", text: $email).textContentType(.emailAddress).textInputAutocapitalization(.never).keyboardType(.emailAddress)
-                    SecureField("Password (8+ characters)", text: $password)
-                    HStack {
-                        Button("Sign in") { Task { await authenticate(signUp: false) } }
-                        Spacer(); Button("Create account") { Task { await authenticate(signUp: true) } }
-                    }.disabled(model.auth.isLoading)
-                } else {
-                    Label("Local Demo Mode", systemImage: "iphone")
-                    Text("Configure Supabase to enable private cross-device accounts. All features remain demonstrable locally.").font(.footnote).foregroundStyle(.secondary)
+                    Button("Log out", role: .destructive) {
+                        Task { await model.auth.signOut() }
+                    }
                 }
             }
             Section("Private profile") {
@@ -60,8 +50,4 @@ struct ProfileView: View {
         }
     }
 
-    private func authenticate(signUp: Bool) async {
-        do { if signUp { try await model.auth.signUp(email: email, password: password) } else { try await model.auth.signIn(email: email, password: password) } }
-        catch { model.presentError(error.localizedDescription) }
-    }
 }

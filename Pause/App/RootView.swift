@@ -5,9 +5,26 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if !model.preferences.onboardingComplete {
-                OnboardingView()
-            } else {
+            switch model.auth.state {
+            case .restoring:
+                LaunchView()
+            case .signedOut:
+                AuthFlowView()
+            case .signedIn:
+                if !model.preferences.onboardingComplete {
+                    OnboardingView()
+                } else {
+                    appContent
+                }
+            }
+        }
+        .tint(PauseTheme.indigo)
+        .alert("Pause needs attention", isPresented: $model.showingError) {
+            Button("OK", role: .cancel) {}
+        } message: { Text(model.errorMessage) }
+    }
+
+    private var appContent: some View {
                 NavigationStack {
                     switch model.route {
                     case .home: HomeView()
@@ -22,11 +39,22 @@ struct RootView: View {
                     case .settings: SettingsView()
                     }
                 }
+    }
+}
+
+private struct LaunchView: View {
+    var body: some View {
+        ZStack {
+            PauseTheme.heroGradient.ignoresSafeArea()
+            VStack(spacing: 18) {
+                Image(systemName: "pause.fill")
+                    .font(.system(size: 54, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 104, height: 104)
+                    .background(.white.opacity(0.16), in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+                Text("Pause").font(.system(size: 42, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                ProgressView().tint(.white).padding(.top, 8).accessibilityLabel("Restoring your account")
             }
         }
-        .tint(PauseTheme.indigo)
-        .alert("Pause needs attention", isPresented: $model.showingError) {
-            Button("OK", role: .cancel) {}
-        } message: { Text(model.errorMessage) }
     }
 }

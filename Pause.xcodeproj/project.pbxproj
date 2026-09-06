@@ -10,6 +10,7 @@
 		010E804E189CC3009E348AB8 /* PauseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F15654695A1816A3193D8AFC /* PauseApp.swift */; };
 		09CE3A8348C1892AD45A8D1E /* SocialHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D30DD205F1C4D4A722E2354 /* SocialHubView.swift */; };
 		144496F92287589079C5E558 /* AIPlannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A3FA7570123C34C1B4A1C8 /* AIPlannerView.swift */; };
+		1CD4972E68E413CD0D2AB277 /* AuthFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBF1BBF77850EC2F8E923DC6 /* AuthFlowView.swift */; };
 		3A18B6D2DB08092E84B0E5C8 /* ActiveSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0424365B8DA9E4AFA71CECD8 /* ActiveSessionView.swift */; };
 		5637A93D8DFD40ADE051B8E2 /* ReflectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 178BF250ABC8EACAF7A58446 /* ReflectionView.swift */; };
 		566CF2F335BC4E1A1A9331E0 /* PreferencesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE60437359A2CC75F6A52B5C /* PreferencesStore.swift */; };
@@ -70,6 +71,7 @@
 		B33C8E0AE6D366249F481CE2 /* AIPlanningService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPlanningService.swift; sourceTree = "<group>"; };
 		BF35E1A850489801BE7DD00E /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		C2599F4681830DAE4892D6F3 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		CBF1BBF77850EC2F8E923DC6 /* AuthFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthFlowView.swift; sourceTree = "<group>"; };
 		D4A3FA7570123C34C1B4A1C8 /* AIPlannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPlannerView.swift; sourceTree = "<group>"; };
 		E3FEDEBD5224150E7531DBAA /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		E63D54E608D1112F813E4008 /* SocialModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialModels.swift; sourceTree = "<group>"; };
@@ -93,6 +95,7 @@
 			children = (
 				0424365B8DA9E4AFA71CECD8 /* ActiveSessionView.swift */,
 				D4A3FA7570123C34C1B4A1C8 /* AIPlannerView.swift */,
+				CBF1BBF77850EC2F8E923DC6 /* AuthFlowView.swift */,
 				B15F572E6634CC1E08C0F728 /* DashboardView.swift */,
 				9DE6340ADE5CE13C69B8027A /* HomeView.swift */,
 				E3FEDEBD5224150E7531DBAA /* OnboardingView.swift */,
@@ -273,6 +276,7 @@
 				C4E0DFEAFE07815DC302CD6F /* AIPlanningService.swift in Sources */,
 				3A18B6D2DB08092E84B0E5C8 /* ActiveSessionView.swift in Sources */,
 				62158FF96D238EB01C06511D /* AppModel.swift in Sources */,
+				1CD4972E68E413CD0D2AB277 /* AuthFlowView.swift in Sources */,
 				B2113232DCE57620FDD524A5 /* AuthService.swift in Sources */,
 				ACDF71A616E04E81C3A9D377 /* DashboardView.swift in Sources */,
 				6A19A0132CACFF92D42F6F9E /* ExportService.swift in Sources */,

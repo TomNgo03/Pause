@@ -9,7 +9,10 @@ struct PauseApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(appModel)
-                .task { await appModel.reconcileSession() }
+                .task {
+                    await appModel.auth.restoreSession()
+                    if appModel.auth.user != nil { await appModel.reconcileSession() }
+                }
                 .onOpenURL { url in
                     if url.host == "reflect" { appModel.route = .reflection }
                 }
@@ -17,4 +20,3 @@ struct PauseApp: App {
         .modelContainer(for: IntentionalSession.self)
     }
 }
-
