@@ -19,6 +19,7 @@ struct RootView: View {
             }
         }
         .tint(PauseTheme.indigo)
+        .preferredColorScheme(.dark)
         .alert("Pause needs attention", isPresented: $model.showingError) {
             Button("OK", role: .cancel) {}
         } message: { Text(model.errorMessage) }
