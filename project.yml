@@ -21,6 +21,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tungngo.pauseapp
         INFOPLIST_FILE: Pause/Resources/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
     dependencies: []
   PauseTests:
     type: bundle.unit-test
