@@ -18,8 +18,7 @@ struct DashboardView: View {
                 }.padding(20).padding(.bottom, 20)
             }
         }
-        .navigationTitle("Reflection").navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button { model.route = .home } label: { Image(systemName: "chevron.left") } } }
+        .navigationTitle("Your journey").navigationBarTitleDisplayMode(.large)
     }
 
     private func header(_ summary: DashboardSummary) -> some View {
@@ -50,4 +49,3 @@ struct DashboardView: View {
         PauseCard { HStack(alignment: .top, spacing: 14) { PauseIcon(systemName: "sparkles", color: PauseTheme.violet); VStack(alignment: .leading, spacing: 5) { Text("A useful next experiment").font(.headline); Text(summary.totalSessions == 0 ? "Try one 10-minute session and notice whether the duration felt realistic." : "Keep the next plan small enough to finish, and change it if circumstances change.").font(.subheadline).foregroundStyle(.secondary) } } }
     }
 }
-

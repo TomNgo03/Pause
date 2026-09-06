@@ -19,9 +19,8 @@ struct SocialHubView: View {
             }.padding()
         }
         .background(PauseTheme.background)
-        .navigationTitle("Together")
+        .navigationTitle("Together").navigationBarTitleDisplayMode(.large)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) { Button("Home") { model.route = .home } }
             ToolbarItem(placement: .navigationBarTrailing) { Button { model.route = .profile } label: { Image(systemName: "person.crop.circle") } }
         }
         .sheet(isPresented: $showingFriend) { AddFriendSheet(store: model.social) }

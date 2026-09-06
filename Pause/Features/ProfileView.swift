@@ -35,7 +35,7 @@ struct ProfileView: View {
         .scrollContentBackground(.hidden)
         .background(PauseBackground())
         .navigationTitle("Profile")
-        .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("Back") { model.route = .social } } }
+        .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button { model.route = .settings } label: { Image(systemName: "gearshape.fill") } } }
         .onAppear { name = model.social.profile.displayName; intention = model.social.profile.dailyIntention ?? "" }
         .confirmationDialog("Delete profile, friends, circles, rooms, and reactions?", isPresented: $showingDelete) {
             Button("Delete social data", role: .destructive) {
