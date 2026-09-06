@@ -113,6 +113,11 @@ struct SocialHubView: View {
                     Circle().fill(PauseTheme.mint).frame(width: 38, height: 38).overlay(Text(String(friend.displayName.prefix(1))).bold())
                     VStack(alignment: .leading) { Text(friend.displayName).bold(); Text(friend.status).font(.caption).foregroundStyle(.secondary) }
                     Spacer()
+                    HStack(spacing: 3) {
+                        ForEach(Array((friend.badgeSymbols ?? []).prefix(2)), id: \.self) { symbol in
+                            Image(systemName: symbol).font(.caption2).foregroundStyle(PauseTheme.mint)
+                        }
+                    }
                     Menu { ForEach(Encouragement.Kind.allCases) { kind in Button(kind.rawValue) { store.send(kind, to: friend) } } } label: { Image(systemName: "hand.thumbsup") }
                 }.card()
             }

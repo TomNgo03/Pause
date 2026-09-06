@@ -18,8 +18,8 @@ final class SocialStore: ObservableObject {
             challenges = state.challenges; encouragements = state.encouragements
         } else {
             let me = PauseProfile(id: UUID(), displayName: "Huy", friendCode: Self.code(), dailyIntention: "Finish one meaningful study task")
-            let minh = PauseFriend(id: UUID(), displayName: "Minh", status: "Focusing for 18 more minutes")
-            let lan = PauseFriend(id: UUID(), displayName: "Lan", status: "Available")
+            let minh = PauseFriend(id: UUID(), displayName: "Minh", status: "Focusing for 18 more minutes", badgeSymbols: ["moon.stars.fill", "paperplane.fill"])
+            let lan = PauseFriend(id: UUID(), displayName: "Lan", status: "Available", badgeSymbols: ["globe.americas.fill"])
             profile = me; friends = [minh, lan]
             circles = [AccountabilityCircle(id: UUID(), name: "Study Circle", memberIDs: [me.id, minh.id, lan.id], weeklyGoal: 20, weeklyProgress: 12)]
             rooms = [FocusRoom(id: UUID(), title: "Physics review", durationMinutes: 25, startedAt: nil, participantIDs: [minh.id], state: .waiting)]
@@ -37,7 +37,7 @@ final class SocialStore: ObservableObject {
     func addFriend(code: String) -> Bool {
         let normalized = code.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
         guard normalized.count >= 4, !friends.contains(where: { $0.displayName == "New friend" }) else { return false }
-        friends.append(PauseFriend(id: UUID(), displayName: "New friend", status: "Invitation accepted")); save(); return true
+        friends.append(PauseFriend(id: UUID(), displayName: "New friend", status: "Invitation accepted", badgeSymbols: [])); save(); return true
     }
 
     func createCircle(name: String) {

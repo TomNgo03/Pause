@@ -1,10 +1,12 @@
 import SwiftUI
+import SwiftData
 
 struct ProfileView: View {
     @EnvironmentObject private var model: AppModel
     @State private var name = ""
     @State private var intention = ""
     @State private var showingDelete = false
+    @Query private var sessions: [IntentionalSession]
 
     var body: some View {
         Form {
@@ -29,6 +31,26 @@ struct ProfileView: View {
                 TextField("Display name", text: $name)
                 TextField("Optional daily intention", text: $intention, axis: .vertical)
                 Button("Save profile") { model.social.updateProfile(name: name, intention: intention.isEmpty ? nil : intention) }
+            }
+            Section("Space journey") {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 14) {
+                        ForEach(SpaceAchievement.journey(for: sessions.count)) { badge in
+                            VStack(spacing: 8) {
+                                Image(systemName: badge.symbol).font(.title2)
+                                    .foregroundStyle(badge.unlocked ? PauseTheme.mint : .secondary)
+                                    .frame(width: 58, height: 58)
+                                    .background(badge.unlocked ? PauseTheme.indigo.opacity(0.22) : PauseTheme.elevated,
+                                                in: Circle())
+                                Text(badge.title).font(.caption.bold()).lineLimit(1)
+                                Text(badge.unlocked ? "Discovered" : "\(badge.requiredSessions) trips")
+                                    .font(.caption2).foregroundStyle(.secondary)
+                            }.frame(width: 92).opacity(badge.unlocked ? 1 : 0.48)
+                        }
+                    }.padding(.vertical, 6)
+                }
+                Label("Friends can see earned badge icons, never your private intentions or reflections.", systemImage: "eye.fill")
+                    .font(.footnote).foregroundStyle(.secondary)
             }
             Section("Friend code") {
                 Text(model.social.profile.friendCode).font(.title.monospaced().bold()).foregroundStyle(PauseTheme.mint).textSelection(.enabled)

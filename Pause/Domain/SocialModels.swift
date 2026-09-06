@@ -11,6 +11,7 @@ struct PauseFriend: Codable, Identifiable, Equatable {
     var id: UUID
     var displayName: String
     var status: String
+    var badgeSymbols: [String]?
 }
 
 struct AccountabilityCircle: Codable, Identifiable, Equatable {
@@ -55,4 +56,3 @@ struct Encouragement: Codable, Identifiable, Equatable {
     var kind: Kind
     var createdAt: Date
 }
-
