@@ -256,8 +256,7 @@ struct AuthFlowView: View {
     private func resend(purpose: AuthService.VerificationPurpose) async {
         errorMessage = nil
         do {
-            if purpose == .signup { try await model.auth.requestSignupCode(email: email, password: password) }
-            else { try await model.auth.requestPasswordResetCode(email: email) }
+            try await model.auth.resendCode(email: email, purpose: purpose)
         } catch { errorMessage = error.localizedDescription }
     }
 

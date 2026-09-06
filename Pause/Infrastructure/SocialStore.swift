@@ -37,7 +37,7 @@ final class SocialStore: ObservableObject {
     func addFriend(code: String) -> Bool {
         let normalized = code.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
         guard normalized.count >= 4, !friends.contains(where: { $0.displayName == "New friend" }) else { return false }
-        friends.append(PauseFriend(id: UUID(), displayName: "New friend", status: "Invitation accepted in Demo Mode")); save(); return true
+        friends.append(PauseFriend(id: UUID(), displayName: "New friend", status: "Invitation accepted")); save(); return true
     }
 
     func createCircle(name: String) {
@@ -76,4 +76,3 @@ final class SocialStore: ObservableObject {
     private static func code() -> String { String(UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(8)).uppercased() }
     private struct State: Codable { var profile: PauseProfile; var friends: [PauseFriend]; var circles: [AccountabilityCircle]; var rooms: [FocusRoom]; var challenges: [CooperativeChallenge]; var encouragements: [Encouragement] }
 }
-

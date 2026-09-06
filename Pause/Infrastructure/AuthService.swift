@@ -127,6 +127,20 @@ final class AuthService: ObservableObject {
         }
     }
 
+    func resendCode(email: String, purpose: VerificationPurpose) async throws {
+        guard email.isValidEmail else { throw AuthError.invalidEmail }
+        if purpose == .recovery {
+            try await requestPasswordResetCode(email: email)
+            return
+        }
+        try await performLoading {
+            let _: EmptyResponse = try await self.request(
+                path: "resend",
+                body: ["email": email.normalizedEmail, "type": purpose.rawValue]
+            )
+        }
+    }
+
     /// Verifies a recovery code, then replaces the password for that temporary session.
     func resetPassword(email: String, code: String, newPassword: String) async throws {
         guard newPassword.count >= 8 else { throw AuthError.weakPassword }
