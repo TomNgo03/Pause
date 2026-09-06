@@ -33,7 +33,7 @@ struct SocialHubView: View {
 
     private var header: some View {
         HStack {
-            VStack(alignment: .leading) { Text("Focus with people you trust").font(.title2.bold()); Text("Private by default · no rankings").foregroundStyle(.secondary) }
+            VStack(alignment: .leading) { Text("Focus with friends").font(.title2.bold()); Text("You can start alone and invite people later").font(.subheadline).foregroundStyle(.secondary) }
             Spacer(); Button { showingFriend = true } label: { Image(systemName: "person.badge.plus") }.buttonStyle(.bordered)
         }
     }

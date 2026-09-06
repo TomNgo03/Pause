@@ -9,6 +9,7 @@ struct AIPlannerView: View {
     @State private var style: AIPlanRequest.FocusStyle = .balanced
     @State private var plan: AIPlan?
     @State private var loading = false
+    @State private var showingPreferences = false
 
     var body: some View {
         Form {
@@ -17,9 +18,11 @@ struct AIPlannerView: View {
                 DatePicker("Deadline", selection: $deadline, in: Date.now...)
                 Stepper("Available time: \(minutes) minutes", value: $minutes, in: 10...180, step: 5)
             }
-            Section("Make the draft fit you") {
-                Picker("Energy", selection: $energy) { ForEach(AIPlanRequest.EnergyLevel.allCases) { Text($0.rawValue).tag($0) } }
-                Picker("Focus style", selection: $style) { ForEach(AIPlanRequest.FocusStyle.allCases) { Text($0.rawValue).tag($0) } }
+            Section {
+                DisclosureGroup("Personalize this plan (optional)", isExpanded: $showingPreferences) {
+                    Picker("Energy right now", selection: $energy) { ForEach(AIPlanRequest.EnergyLevel.allCases) { Text($0.rawValue).tag($0) } }
+                    Picker("Preferred session length", selection: $style) { ForEach(AIPlanRequest.FocusStyle.allCases) { Text($0.rawValue).tag($0) } }
+                }
             }
             Section {
                 Button { Task { await generate() } } label: {
