@@ -20,6 +20,11 @@ struct GeneratedPlan {
     let source: PlanGenerationSource
 }
 
+struct GeneratedPlanOptions {
+    let plans: [AIPlan]
+    let source: PlanGenerationSource
+}
+
 struct AIPlanningService {
     private let session = URLSession.shared
 
@@ -62,6 +67,32 @@ struct AIPlanningService {
         }
         #endif
         return GeneratedPlan(plan: try PlanValidator.validate(offlinePlan(request), availableMinutes: request.availableMinutes), source: .localPlanner)
+    }
+
+    func createPlanOptions(for goal: String, availableMinutes: Int = 90) async throws -> GeneratedPlanOptions {
+        let cleanGoal = goal.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanGoal.isEmpty else { throw PlanningError.emptyTask }
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, *), SystemLanguageModel.default.isAvailable {
+            do {
+                let plans = try await createOnDevicePlanOptions(goal: cleanGoal, availableMinutes: availableMinutes)
+                let validated = try plans.map { try PlanValidator.validate($0, availableMinutes: availableMinutes) }
+                guard validated.count == 3 else { throw PlanningError.invalidResponse }
+                return GeneratedPlanOptions(plans: validated, source: .onDeviceAI)
+            } catch {
+                // Fall through to three deterministic options when the model cannot answer safely.
+            }
+        }
+        #endif
+        let styles: [AIPlanRequest.FocusStyle] = [.short, .balanced, .deep]
+        let titles = ["Gentle foundation", "Balanced path", "Focused challenge"]
+        let plans = try zip(styles, titles).map { style, title in
+            let request = AIPlanRequest(task: cleanGoal, deadline: .now.addingTimeInterval(604_800), availableMinutes: availableMinutes, energy: .medium, style: style)
+            var plan = try PlanValidator.validate(offlinePlan(request), availableMinutes: availableMinutes)
+            plan.title = title
+            return plan
+        }
+        return GeneratedPlanOptions(plans: plans, source: .localPlanner)
     }
 
     func offlinePlan(_ request: AIPlanRequest) -> AIPlan {
@@ -110,6 +141,30 @@ private extension AIPlanningService {
         }
         return AIPlan(title: output.title, summary: output.summary, totalMinutes: 0, steps: steps, safetyNote: output.safetyNote)
     }
+
+    func createOnDevicePlanOptions(goal: String, availableMinutes: Int) async throws -> [AIPlan] {
+        let modelSession = LanguageModelSession(instructions: """
+        You are Pause Focus Coach for high-school students. Turn a goal into exactly three distinct, realistic options: a gentle foundation, a balanced path, and a faster challenge.
+        Account honestly for the student's stated experience. If the goal is unrealistic, preserve the aspiration but teach prerequisites first instead of pretending it can be completed immediately.
+        Every option must be easy to follow, use concrete verbs, contain 3 to 5 chronological steps, and fit within the available focus minutes.
+        Never diagnose, shame, promise grades, or give medical advice. Protect sleep, meals, movement, safety, and urgent communication.
+        """)
+        let response = try await modelSession.respond(
+            to: "Goal: \(goal)\nAvailable focus time for this plan: \(availableMinutes) minutes. Create three meaningfully different routes.",
+            generating: OnDevicePlanBundle.self,
+            options: GenerationOptions(sampling: .greedy, temperature: 0.25, maximumResponseTokens: 1_600)
+        )
+        return response.content.plans.map { output in
+            AIPlan(title: output.title, summary: output.summary, totalMinutes: 0, steps: output.steps.map { AIPlanStep(title: $0.title, durationMinutes: $0.durationMinutes, breakMinutes: $0.breakMinutes, intention: .learning) }, safetyNote: output.safetyNote)
+        }
+    }
+}
+
+@available(iOS 26.0, *)
+@Generable(description: "Exactly three distinct study plan choices")
+private struct OnDevicePlanBundle {
+    @Guide(description: "Three choices: gentle foundation, balanced path, and faster challenge", .count(3))
+    var plans: [OnDevicePlan]
 }
 
 @available(iOS 26.0, *)

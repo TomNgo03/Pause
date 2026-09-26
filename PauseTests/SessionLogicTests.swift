@@ -28,6 +28,15 @@ final class SessionLogicTests: XCTestCase {
         XCTAssertFalse(validated.steps.isEmpty)
     }
 
+    func testCoachProvidesThreePlanOptionsWithoutModel() async throws {
+        let result = try await AIPlanningService().createPlanOptions(
+            for: "Learn enough coding to begin LeetCode",
+            availableMinutes: 90
+        )
+        XCTAssertEqual(result.plans.count, 3)
+        XCTAssertTrue(result.plans.allSatisfy { !$0.steps.isEmpty && $0.totalMinutes <= 90 })
+    }
+
     func testValidatorRejectsOversizedPlan() {
         let steps = (0..<3).map { _ in AIPlanStep(title: "Work", durationMinutes: 60, breakMinutes: 20, intention: .learning) }
         let invalid = AIPlan(title: "Too long", summary: "", totalMinutes: 240, steps: steps, safetyNote: nil)
