@@ -35,7 +35,7 @@ struct RootView: View {
     }
 
     private var showsTabBar: Bool {
-        [.home, .dashboard, .aiPlanner, .profile].contains(model.route)
+        [.home, .aiPlanner, .profile].contains(model.route)
     }
 }
 
@@ -43,7 +43,6 @@ private struct PauseTabBar: View {
     @Binding var selection: AppModel.Route
     private let tabs: [(AppModel.Route, String, String)] = [
         (.home, "Today", "sun.max.fill"),
-        (.dashboard, "Journey", "chart.bar.fill"),
         (.aiPlanner, "Coach", "sparkles"),
         (.profile, "You", "person.crop.circle.fill")
     ]
