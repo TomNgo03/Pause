@@ -4,10 +4,11 @@ import Combine
 
 @MainActor
 final class AppModel: ObservableObject {
-    enum Route: Equatable { case home, appSelection, plan, aiPlanner, social, profile, active, reflection, dashboard, settings }
+    enum Route: Equatable { case home, appSelection, plan, aiPlanner, profile, active, reflection, dashboard, settings }
 
     @Published var route: Route = .home
     @Published private(set) var activeSession: SessionDraft?
+    @Published private(set) var sessionPausedAt: Date?
     @Published var showingError = false
     @Published var errorMessage = ""
 
@@ -18,13 +19,11 @@ final class AppModel: ObservableObject {
     let planner = AIPlanningService()
     let auth = AuthService()
     private var socialObservation: AnyCancellable?
-    private var authObservation: AnyCancellable?
 
     init(screenTime: ScreenTimeControlling = ScreenTimeServiceFactory.make()) {
         self.screenTime = screenTime
         self.activeSession = SessionRecoveryStore.load()
         socialObservation = social.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
-        authObservation = auth.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
     }
 
     func start(_ draft: SessionDraft) async {
@@ -56,6 +55,20 @@ final class AppModel: ObservableObject {
         catch { presentError(error.localizedDescription) }
     }
 
+    func togglePause() async {
+        guard var session = activeSession else { return }
+        if let pausedAt = sessionPausedAt {
+            session.plannedEnd = session.plannedEnd.addingTimeInterval(Date.now.timeIntervalSince(pausedAt))
+            activeSession = session
+            sessionPausedAt = nil
+            SessionRecoveryStore.save(session)
+            await notifications.scheduleSessionEnd(at: session.plannedEnd)
+        } else {
+            sessionPausedAt = .now
+            notifications.cancelSessionNotifications()
+        }
+    }
+
     func finishSession() async {
         guard var session = activeSession else { return }
         session.actualEnd = .now
@@ -70,12 +83,14 @@ final class AppModel: ObservableObject {
         await screenTime.endIntentionalSession()
         notifications.cancelSessionNotifications()
         activeSession = nil
+        sessionPausedAt = nil
         SessionRecoveryStore.clear()
         route = .home
     }
 
     func completeReflection() {
         activeSession = nil
+        sessionPausedAt = nil
         SessionRecoveryStore.clear()
         route = .home
     }

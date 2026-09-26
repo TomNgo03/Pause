@@ -5,21 +5,11 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            switch model.auth.state {
-            case .restoring:
-                LaunchView()
-            case .signedOut:
-                AuthFlowView()
-            case .signedIn:
-                if !model.preferences.onboardingComplete {
-                    OnboardingView()
-                } else {
-                    appContent
-                }
-            }
+            if !model.preferences.onboardingComplete { OnboardingView() }
+            else { appContent }
         }
-        .tint(PauseTheme.indigo)
-        .preferredColorScheme(.dark)
+        .tint(PauseTheme.orange)
+        .preferredColorScheme(.light)
         .alert("Pause needs attention", isPresented: $model.showingError) {
             Button("OK", role: .cancel) {}
         } message: { Text(model.errorMessage) }
@@ -32,7 +22,6 @@ struct RootView: View {
                     case .appSelection: ProtectedAppsView()
                     case .plan: SessionPlannerView()
                     case .aiPlanner: AIPlannerView()
-                    case .social: SocialHubView()
                     case .profile: ProfileView()
                     case .active: ActiveSessionView()
                     case .reflection: ReflectionView()
@@ -46,17 +35,16 @@ struct RootView: View {
     }
 
     private var showsTabBar: Bool {
-        [.home, .dashboard, .aiPlanner, .social, .profile].contains(model.route)
+        [.home, .dashboard, .aiPlanner, .profile].contains(model.route)
     }
 }
 
 private struct PauseTabBar: View {
     @Binding var selection: AppModel.Route
     private let tabs: [(AppModel.Route, String, String)] = [
-        (.home, "Home", "house.fill"),
+        (.home, "Today", "sun.max.fill"),
         (.dashboard, "Journey", "chart.bar.fill"),
         (.aiPlanner, "Coach", "sparkles"),
-        (.social, "Together", "person.2.fill"),
         (.profile, "You", "person.crop.circle.fill")
     ]
 
@@ -70,9 +58,9 @@ private struct PauseTabBar: View {
                         Image(systemName: icon).font(.system(size: 19, weight: .semibold))
                         Text(label).font(.system(size: 10, weight: .semibold))
                     }
-                    .foregroundStyle(selection == route ? .white : .secondary)
+                    .foregroundStyle(selection == route ? PauseTheme.ink : PauseTheme.muted)
                     .frame(maxWidth: .infinity).padding(.vertical, 9)
-                    .background(selection == route ? PauseTheme.indigo.opacity(0.20) : .clear,
+                    .background(selection == route ? PauseTheme.sage : .clear,
                                 in: RoundedRectangle(cornerRadius: 15, style: .continuous))
                 }
                 .buttonStyle(.plain)
@@ -80,8 +68,8 @@ private struct PauseTabBar: View {
             }
         }
         .padding(.horizontal, 10).padding(.vertical, 7)
-        .background(PauseTheme.card)
-        .overlay(alignment: .top) { Rectangle().fill(.white.opacity(0.08)).frame(height: 0.5) }
+        .background(PauseTheme.cream)
+        .overlay(alignment: .top) { Rectangle().fill(PauseTheme.ink.opacity(0.10)).frame(height: 0.5) }
     }
 }
 

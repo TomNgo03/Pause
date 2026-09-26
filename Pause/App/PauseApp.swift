@@ -10,8 +10,7 @@ struct PauseApp: App {
             RootView()
                 .environmentObject(appModel)
                 .task {
-                    await appModel.auth.restoreSession()
-                    if appModel.auth.user != nil { await appModel.reconcileSession() }
+                    await appModel.reconcileSession()
                 }
                 .onOpenURL { url in
                     if url.host == "reflect" { appModel.route = .reflection }

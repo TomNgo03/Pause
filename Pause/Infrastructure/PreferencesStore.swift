@@ -19,8 +19,38 @@ final class PreferencesStore {
         set { defaults.set(newValue, forKey: "participantCode") }
     }
 
+    var displayName: String {
+        get { defaults.string(forKey: "displayName") ?? "Huy" }
+        set { defaults.set(newValue, forKey: "displayName") }
+    }
+
+    var primaryGoal: String {
+        get { defaults.string(forKey: "primaryGoal") ?? "Study" }
+        set { defaults.set(newValue, forKey: "primaryGoal") }
+    }
+
+    var preferredMinutes: Int {
+        get { let value = defaults.integer(forKey: "preferredMinutes"); return value == 0 ? 25 : value }
+        set { defaults.set(newValue, forKey: "preferredMinutes") }
+    }
+
+    var initialAttention: String {
+        get { defaults.string(forKey: "initialAttention") ?? "Clear" }
+        set { defaults.set(newValue, forKey: "initialAttention") }
+    }
+
+    var focusStatement: String {
+        get { defaults.string(forKey: "focusStatement") ?? "I want technology to support what matters to me." }
+        set { defaults.set(newValue, forKey: "focusStatement") }
+    }
+
+    var demoDataEnabled: Bool {
+        get { defaults.bool(forKey: "demoDataEnabled") }
+        set { defaults.set(newValue, forKey: "demoDataEnabled") }
+    }
+
     func reset() {
-        ["onboardingComplete", "participantCode"].forEach { defaults.removeObject(forKey: $0) }
+        ["onboardingComplete", "participantCode", "displayName", "primaryGoal", "preferredMinutes", "initialAttention", "focusStatement", "demoDataEnabled"].forEach { defaults.removeObject(forKey: $0) }
     }
 }
 
