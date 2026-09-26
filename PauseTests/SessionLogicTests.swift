@@ -33,4 +33,27 @@ final class SessionLogicTests: XCTestCase {
         let invalid = AIPlan(title: "Too long", summary: "", totalMinutes: 240, steps: steps, safetyNote: nil)
         XCTAssertThrowsError(try PlanValidator.validate(invalid, availableMinutes: 30))
     }
+
+    func testDailyPauseIsStableForCalendarDay() {
+        let morning = Date(timeIntervalSince1970: 1_800_000_000)
+        let later = morning.addingTimeInterval(60 * 60)
+        XCTAssertEqual(DailyPause.message(on: morning), DailyPause.message(on: later))
+    }
+
+    func testAchievementRulesUseSessionEvidence() {
+        let start = Date.now.addingTimeInterval(-3_600)
+        var draft = SessionDraft(
+            intention: .learning,
+            plannedStart: start,
+            plannedEnd: start.addingTimeInterval(2_400),
+            actualEnd: start.addingTimeInterval(2_400),
+            task: "Finish one chapter"
+        )
+        draft.actualEnd = draft.plannedEnd
+        let session = IntentionalSession(draft: draft, outcome: .yes, control: .inControl)
+        let achievements = MindfulAchievement.unlocked(from: [session], weeklyReflection: "")
+        XCTAssertTrue(achievements.contains { $0.id == "launch" })
+        XCTAssertTrue(achievements.contains { $0.id == "deep" })
+        XCTAssertFalse(achievements.contains { $0.id == "steady" })
+    }
 }
