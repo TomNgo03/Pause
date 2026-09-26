@@ -3,42 +3,94 @@ import SwiftUI
 struct OnboardingView: View {
     @EnvironmentObject private var model: AppModel
     @State private var page = 0
-
-    private let pages = [
-        Page(icon: "pause.fill", title: "A small pause can change the next hour.", body: "Choose why you are opening an app, decide what enough looks like, and move forward on purpose.", color: PauseTheme.indigo),
-        Page(icon: "hand.raised.fill", title: "You stay in control.", body: "No shame, punishment, or public rankings. Plans can change and every reflection is optional.", color: PauseTheme.coral),
-        Page(icon: "lock.shield.fill", title: "Private by design.", body: "Pause does not read messages, browsing content, contacts, grades, diagnoses, or location.", color: PauseTheme.mint)
-    ]
+    @State private var name = ""
+    @State private var goal = "Study"
+    @State private var minutes = 25
+    @State private var attention = "Clear"
+    private let goals = ["Study", "Reading", "Creative work", "Wellbeing", "Other"]
+    private let attentionOptions = ["Clear", "Restless", "Tired", "Overwhelmed"]
 
     var body: some View {
         ZStack {
             PauseBackground()
             VStack(spacing: 0) {
-                HStack { Spacer(); Button("Skip") { finish() }.font(.subheadline.weight(.semibold)).opacity(page == pages.count - 1 ? 0 : 1).disabled(page == pages.count - 1) }.padding()
-                TabView(selection: $page) {
-                    ForEach(Array(pages.enumerated()), id: \.offset) { index, item in
-                        VStack(spacing: 28) {
-                            Spacer()
-                            ZStack {
-                                Circle().fill(item.color.opacity(0.10)).frame(width: 210, height: 210)
-                                Circle().fill(item.color.opacity(0.14)).frame(width: 150, height: 150)
-                                Image(systemName: item.icon).font(.system(size: 58, weight: .bold)).foregroundStyle(item.color.gradient)
-                            }
-                            VStack(spacing: 14) {
-                                Text(item.title).font(.system(.largeTitle, design: .rounded, weight: .bold)).multilineTextAlignment(.center).tracking(-0.7)
-                                Text(item.body).font(.title3).foregroundStyle(.secondary).multilineTextAlignment(.center).lineSpacing(4)
-                            }.padding(.horizontal, 24)
-                            Spacer()
-                        }.tag(index)
-                    }
-                }.tabViewStyle(.page(indexDisplayMode: .always))
-                Button(page == pages.count - 1 ? "Begin with intention" : "Continue") {
-                    if page < pages.count - 1 { withAnimation(.snappy) { page += 1 } } else { finish() }
-                }.buttonStyle(PrimaryButtonStyle()).padding(.horizontal, 24).padding(.bottom, 24).accessibilityIdentifier("onboardingContinue")
+                HStack { Text("PAUSE").font(.caption.bold()).tracking(2); Spacer(); Text("0\(page + 1) / 03").font(.caption.monospacedDigit()) }
+                    .foregroundStyle(PauseTheme.muted).padding(24)
+                Group {
+                    if page == 0 { welcome }
+                    else if page == 1 { setup }
+                    else { checkIn }
+                }.frame(maxWidth: 600)
+                Spacer()
+                Button(page == 2 ? "Enter Pause" : "Continue") { advance() }
+                    .buttonStyle(PrimaryButtonStyle()).disabled(page == 1 && name.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .padding(24)
             }
+        }.foregroundStyle(PauseTheme.ink)
+    }
+
+    private var welcome: some View {
+        VStack(alignment: .leading, spacing: 28) {
+            Spacer()
+            ZStack { Circle().fill(PauseTheme.sage).frame(width: 150, height: 150); Image(systemName: "pause.fill").font(.system(size: 54, weight: .bold)).foregroundStyle(PauseTheme.forest) }
+            Text("Use your attention\nwith intention.").font(.system(size: 43, weight: .bold, design: .serif)).tracking(-1.2)
+            Text("Pause helps you choose one meaningful next step, focus without pressure, and learn from what happened.").font(.title3).foregroundStyle(PauseTheme.muted).lineSpacing(5)
+            Spacer()
+        }.padding(.horizontal, 28)
+    }
+
+    private var setup: some View {
+        ScrollView { VStack(alignment: .leading, spacing: 24) {
+            Text("Make it yours.").font(.system(size: 40, weight: .bold, design: .serif))
+            TextField("First name or nickname", text: $name).textFieldStyle(.plain).padding(18).background(PauseTheme.paper, in: RoundedRectangle(cornerRadius: 18))
+            choiceSection("What matters most?", values: goals, selection: $goal)
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Your usual focus time").font(.headline)
+                HStack { ForEach([15, 25, 40, 60], id: \.self) { value in
+                    Button("\(value)m") { minutes = value }.buttonStyle(ChoiceButtonStyle(selected: minutes == value))
+                } }
+            }
+        }.padding(28) }
+    }
+
+    private var checkIn: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            Text("Where are you\nstarting today?").font(.system(size: 40, weight: .bold, design: .serif))
+            Text("There is no wrong answer. Pause adapts the first suggestion to you.").foregroundStyle(PauseTheme.muted)
+            choiceSection("My attention feels…", values: attentionOptions, selection: $attention)
+            Spacer()
+            EditorialCard(color: PauseTheme.sage) { Label("Your data stays on this device unless you explicitly request an online Coach enhancement.", systemImage: "lock.fill").font(.footnote).foregroundStyle(PauseTheme.forest) }
+        }.padding(28)
+    }
+
+    private func choiceSection(_ title: String, values: [String], selection: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title).font(.headline)
+            FlowLayout(spacing: 9) { ForEach(values, id: \.self) { value in Button(value) { selection.wrappedValue = value }.buttonStyle(ChoiceButtonStyle(selected: selection.wrappedValue == value)) } }
         }
     }
 
-    private func finish() { model.preferences.onboardingComplete = true; model.objectWillChange.send() }
-    private struct Page { let icon: String; let title: String; let body: String; let color: Color }
+    private func advance() {
+        if page < 2 { withAnimation(.easeInOut(duration: 0.25)) { page += 1 } }
+        else {
+            model.preferences.displayName = name.trimmingCharacters(in: .whitespaces)
+            model.preferences.primaryGoal = goal; model.preferences.preferredMinutes = minutes; model.preferences.initialAttention = attention
+            model.preferences.onboardingComplete = true; model.objectWillChange.send()
+        }
+    }
+}
+
+private struct ChoiceButtonStyle: ButtonStyle {
+    let selected: Bool
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label.font(.subheadline.weight(.semibold)).padding(.horizontal, 16).frame(minHeight: 46)
+            .foregroundStyle(selected ? Color.white : PauseTheme.ink).background(selected ? PauseTheme.forest : PauseTheme.paper, in: Capsule())
+            .overlay(Capsule().stroke(PauseTheme.ink.opacity(0.1)))
+    }
+}
+
+struct FlowLayout<Content: View>: View {
+    let spacing: CGFloat
+    @ViewBuilder let content: Content
+    var body: some View { ViewThatFits { HStack(spacing: spacing) { content }; VStack(alignment: .leading, spacing: spacing) { content } } }
 }
