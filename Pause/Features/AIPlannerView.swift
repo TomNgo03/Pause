@@ -5,6 +5,7 @@ struct AIPlannerView: View {
     @FocusState private var promptFocused: Bool
     @State private var screen: CoachScreen = .prompt
     @State private var goal = ""
+    @State private var deadline = Calendar.current.date(byAdding: .day, value: 7, to: .now) ?? .now
     @State private var plans: [AIPlan] = []
     @State private var selectedIndex = 0
     @State private var chosenIndex: Int?
@@ -36,6 +37,15 @@ struct AIPlannerView: View {
                 TextField("Example: Do 20 hard LeetCode questions with no coding background", text: $goal, axis: .vertical)
                     .font(.title3.weight(.medium)).lineLimit(4...8).focused($promptFocused)
                     .padding(20).background(PauseTheme.paper, in: RoundedRectangle(cornerRadius: 22)).overlay(RoundedRectangle(cornerRadius: 22).stroke(PauseTheme.ink.opacity(0.1)))
+
+                EditorialCard {
+                    HStack(spacing: 14) {
+                        Image(systemName: "calendar.badge.clock").font(.title2).foregroundStyle(PauseTheme.orange)
+                        VStack(alignment: .leading, spacing: 3) { Text("Deadline").font(.headline); Text(deadlineHint).font(.caption).foregroundStyle(PauseTheme.muted) }
+                        Spacer()
+                        DatePicker("Deadline", selection: $deadline, in: Calendar.current.startOfDay(for: .now)..., displayedComponents: .date).labelsHidden()
+                    }
+                }
 
                 VStack(alignment: .leading, spacing: 10) {
                     Text("TRY AN EXAMPLE").font(.caption.bold()).tracking(1.2).foregroundStyle(PauseTheme.muted)
@@ -78,7 +88,7 @@ struct AIPlannerView: View {
                 Text("Making three paths…").font(.system(size: 34, weight: .bold, design: .serif))
                 Text("Checking the starting point, prerequisites, and a realistic first step.").font(.title3).foregroundStyle(PauseTheme.muted).multilineTextAlignment(.center).lineSpacing(4)
             }
-            EditorialCard { VStack(alignment: .leading, spacing: 8) { Text("YOUR GOAL").font(.caption.bold()).tracking(1.2).foregroundStyle(PauseTheme.orange); Text(cleanGoal).font(.headline) } }
+            EditorialCard { VStack(alignment: .leading, spacing: 8) { Text("YOUR GOAL").font(.caption.bold()).tracking(1.2).foregroundStyle(PauseTheme.orange); Text(cleanGoal).font(.headline); Label("Due \(deadline.formatted(date: .abbreviated, time: .omitted))", systemImage: "calendar").font(.caption).foregroundStyle(PauseTheme.muted) } }
             Spacer()
         }.padding(26).frame(maxWidth: 600)
     }
@@ -128,7 +138,8 @@ struct AIPlannerView: View {
     }
 
     private var cleanGoal: String { goal.trimmingCharacters(in: .whitespacesAndNewlines) }
-    private func makePlans() { promptFocused = false; withAnimation { screen = .generating }; Task { do { let result = try await model.planner.createPlanOptions(for: cleanGoal); await MainActor.run { plans = result.plans; generationSource = result.source; selectedIndex = 0; chosenIndex = nil; withAnimation { screen = .choices } } } catch { await MainActor.run { model.presentError(error.localizedDescription); screen = .prompt } } } }
+    private var deadlineHint: String { let days = max(0, Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: .now), to: Calendar.current.startOfDay(for: deadline)).day ?? 0); return days == 0 ? "Today" : days == 1 ? "Tomorrow" : "\(days) days remaining" }
+    private func makePlans() { promptFocused = false; withAnimation { screen = .generating }; Task { do { let result = try await model.planner.createPlanOptions(for: cleanGoal, deadline: deadline); await MainActor.run { plans = result.plans; generationSource = result.source; selectedIndex = 0; chosenIndex = nil; withAnimation { screen = .choices } } } catch { await MainActor.run { model.presentError(error.localizedDescription); screen = .prompt } } } }
     private func save(_ plan: AIPlan) { UserDefaults.standard.set(try? JSONEncoder().encode(plan), forKey: "activeFocusPlan"); UserDefaults.standard.set(generationSource.rawValue, forKey: "activeFocusPlanSource") }
     private func start(_ step: AIPlanStep) { let now = Date.now; Task { await model.start(SessionDraft(intention: step.intention, plannedStart: now, plannedEnd: now.addingTimeInterval(Double(step.durationMinutes * 60)), task: step.title)) } }
     private func reset() { plans = []; chosenIndex = nil; selectedIndex = 0; screen = .prompt; UserDefaults.standard.removeObject(forKey: "activeFocusPlan") }

@@ -69,13 +69,13 @@ struct AIPlanningService {
         return GeneratedPlan(plan: try PlanValidator.validate(offlinePlan(request), availableMinutes: request.availableMinutes), source: .localPlanner)
     }
 
-    func createPlanOptions(for goal: String, availableMinutes: Int = 90) async throws -> GeneratedPlanOptions {
+    func createPlanOptions(for goal: String, deadline: Date = .now.addingTimeInterval(604_800), availableMinutes: Int = 90) async throws -> GeneratedPlanOptions {
         let cleanGoal = goal.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanGoal.isEmpty else { throw PlanningError.emptyTask }
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *), SystemLanguageModel.default.isAvailable {
             do {
-                let plans = try await createOnDevicePlanOptions(goal: cleanGoal, availableMinutes: availableMinutes).map { normalized($0, availableMinutes: availableMinutes) }
+                let plans = try await createOnDevicePlanOptions(goal: cleanGoal, deadline: deadline, availableMinutes: availableMinutes).map { normalized($0, availableMinutes: availableMinutes) }
                 let validated = try plans.map { try PlanValidator.validate($0, availableMinutes: availableMinutes) }
                 guard validated.count == 3 else { throw PlanningError.invalidResponse }
                 return GeneratedPlanOptions(plans: validated, source: .onDeviceAI)
@@ -87,7 +87,7 @@ struct AIPlanningService {
         let styles: [AIPlanRequest.FocusStyle] = [.short, .balanced, .deep]
         let titles = ["Gentle foundation", "Balanced path", "Focused challenge"]
         let plans = try zip(styles, titles).map { style, title in
-            let request = AIPlanRequest(task: cleanGoal, deadline: .now.addingTimeInterval(604_800), availableMinutes: availableMinutes, energy: .medium, style: style)
+            let request = AIPlanRequest(task: cleanGoal, deadline: deadline, availableMinutes: availableMinutes, energy: .medium, style: style)
             var plan = try PlanValidator.validate(offlinePlan(request), availableMinutes: availableMinutes)
             plan.title = title
             return plan
@@ -174,15 +174,15 @@ private extension AIPlanningService {
         return AIPlan(title: output.title, summary: output.summary, totalMinutes: 0, steps: steps, safetyNote: output.safetyNote)
     }
 
-    func createOnDevicePlanOptions(goal: String, availableMinutes: Int) async throws -> [AIPlan] {
+    func createOnDevicePlanOptions(goal: String, deadline: Date, availableMinutes: Int) async throws -> [AIPlan] {
         let modelSession = LanguageModelSession(instructions: """
-        You are Pause Focus Coach for high-school students. Turn a goal into exactly three distinct, realistic options: a gentle foundation, a balanced path, and a faster challenge.
+        You are Pause Focus Coach for high-school students. Turn a goal and deadline into exactly three distinct, realistic options: a gentle foundation, a balanced path, and a faster challenge.
         Account honestly for the student's stated experience. If the goal is unrealistic, preserve the aspiration but teach prerequisites first instead of pretending it can be completed immediately.
         Every option must be easy to follow, use concrete verbs, contain 3 to 5 chronological steps, and fit within the available focus minutes.
         Never diagnose, shame, promise grades, or give medical advice. Protect sleep, meals, movement, safety, and urgent communication.
         """)
         let response = try await modelSession.respond(
-            to: "Goal: \(goal)\nAvailable focus time for this plan: \(availableMinutes) minutes. Create three meaningfully different routes.",
+            to: "Goal: \(goal)\nDeadline: \(deadline.formatted(date: .complete, time: .omitted))\nDays remaining: \(max(0, Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: .now), to: Calendar.current.startOfDay(for: deadline)).day ?? 0))\nAvailable focus time for the first planning block: \(availableMinutes) minutes. Create three meaningfully different routes and state an honest pace toward the deadline.",
             generating: OnDevicePlanBundle.self,
             options: GenerationOptions(sampling: .greedy, temperature: 0.25, maximumResponseTokens: 1_600)
         )
