@@ -3,82 +3,43 @@ import SwiftData
 
 struct ProfileView: View {
     @EnvironmentObject private var model: AppModel
-    @State private var name = ""
-    @State private var intention = ""
-    @State private var showingDelete = false
     @Query private var sessions: [IntentionalSession]
+    @State private var name = ""
+    @State private var statement = ""
+    private var realSessions: [IntentionalSession] { sessions.filter { !$0.isDemoData } }
+    private var minutes: Int { realSessions.reduce(0) { $0 + $1.actualMinutes } }
+    private var achievements: [MindfulAchievement] { MindfulAchievement.unlocked(from: realSessions, weeklyReflection: UserDefaults.standard.string(forKey: "weeklyReflection") ?? "") }
 
     var body: some View {
-        Form {
-            Section {
-                VStack(spacing: 12) {
-                    Circle().fill(PauseTheme.heroGradient).frame(width: 92, height: 92)
-                        .overlay(Text(String((name.isEmpty ? "P" : name).prefix(1))).font(.system(size: 36, weight: .bold)))
-                        .overlay(Circle().stroke(.white.opacity(0.18), lineWidth: 3))
-                    Text(name.isEmpty ? "Your Pause profile" : name).font(.title2.bold())
-                    Text(model.auth.user?.email ?? "Private account").font(.subheadline).foregroundStyle(.secondary)
-                }.frame(maxWidth: .infinity).listRowBackground(Color.clear).padding(.vertical, 12)
-            }
-            Section("Account") {
-                if let user = model.auth.user {
-                    LabeledContent("Account email", value: user.email ?? "Private account")
-                    Button("Log out", role: .destructive) {
-                        Task { await model.auth.signOut() }
-                    }
-                }
-            }
-            Section("Private profile") {
-                TextField("Display name", text: $name)
-                TextField("Optional daily intention", text: $intention, axis: .vertical)
-                Button("Save profile") { model.social.updateProfile(name: name, intention: intention.isEmpty ? nil : intention) }
-            }
-            Section("Space journey") {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 14) {
-                        ForEach(SpaceAchievement.journey(for: sessions.count)) { badge in
-                            VStack(spacing: 8) {
-                                Image(systemName: badge.symbol).font(.title2)
-                                    .foregroundStyle(badge.unlocked ? PauseTheme.mint : .secondary)
-                                    .frame(width: 58, height: 58)
-                                    .background(badge.unlocked ? PauseTheme.indigo.opacity(0.22) : PauseTheme.elevated,
-                                                in: Circle())
-                                Text(badge.title).font(.caption.bold()).lineLimit(1)
-                                Text(badge.unlocked ? "Discovered" : "\(badge.requiredSessions) trips")
-                                    .font(.caption2).foregroundStyle(.secondary)
-                            }.frame(width: 92).opacity(badge.unlocked ? 1 : 0.48)
-                        }
-                    }.padding(.vertical, 6)
-                }
-                Label("Friends can see earned badge icons, never your private intentions or reflections.", systemImage: "eye.fill")
-                    .font(.footnote).foregroundStyle(.secondary)
-            }
-            Section("Friend code") {
-                Text(model.social.profile.friendCode).font(.title.monospaced().bold()).foregroundStyle(PauseTheme.mint).textSelection(.enabled)
-                Text("Share this code only with people you know. Pause has no public people search.").font(.footnote).foregroundStyle(.secondary)
-            }
-            Section("Safety") {
-                Label("Private profile", systemImage: "lock.fill")
-                Label("Preset encouragement only", systemImage: "message.fill")
-                Label("No followers or public ranking", systemImage: "person.2.slash")
-            }
-            Section { Button("Delete social account data", role: .destructive) { showingDelete = true } }
-        }
-        .scrollContentBackground(.hidden)
-        .background(PauseBackground())
-        .navigationTitle("Profile")
-        .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button { model.route = .settings } label: { Image(systemName: "gearshape.fill") } } }
-        .onAppear { name = model.social.profile.displayName; intention = model.social.profile.dailyIntention ?? "" }
-        .confirmationDialog("Delete profile, friends, circles, rooms, and reactions?", isPresented: $showingDelete) {
-            Button("Delete social data", role: .destructive) {
-                Task {
-                    do {
-                        try await model.auth.deleteRemoteAccount()
-                        model.social.deleteAccountData(); model.route = .home
-                    } catch { model.presentError(error.localizedDescription) }
-                }
-            }
-            Button("Cancel", role: .cancel) {}
-        }
+        ZStack { PauseBackground(); ScrollView(showsIndicators: false) { VStack(alignment: .leading, spacing: 24) {
+            HStack { Text("YOU").font(.caption.bold()).tracking(1.5).foregroundStyle(PauseTheme.orange); Spacer(); Button { model.route = .settings } label: { Image(systemName: "gearshape.fill").frame(width: 44, height: 44).background(PauseTheme.sage, in: Circle()) }.accessibilityLabel("Settings") }
+            profileHero
+            VStack(alignment: .leading, spacing: 13) { PauseSectionHeader(title: "Milestones", subtitle: "Evidence of mindful practice, not competition."); if achievements.isEmpty { EmptyStateView(title: "Your first milestone is close", message: "Complete one intentional session to earn First Launch.", symbol: "paperplane") } else { ScrollView(.horizontal, showsIndicators: false) { HStack { ForEach(achievements.prefix(3)) { PlanetBadge(achievement: $0) } } } } }
+            personalDetails
+            shareCard
+        }.padding(20).padding(.bottom, 30) } }.foregroundStyle(PauseTheme.ink).toolbar(.hidden, for: .navigationBar).onAppear { name = model.preferences.displayName; statement = model.preferences.focusStatement }
     }
 
+    private var profileHero: some View { EditorialCard(color: PauseTheme.forest) { VStack(alignment: .leading, spacing: 18) { HStack { Text(String((name.isEmpty ? "P" : name).prefix(1)).uppercased()).font(.system(size: 32, weight: .bold, design: .serif)).foregroundStyle(PauseTheme.forest).frame(width: 72, height: 72).background(PauseTheme.sage, in: Circle()); Spacer(); Text(model.preferences.primaryGoal.uppercased()).font(.caption.bold()).tracking(1.2).foregroundStyle(PauseTheme.sage) }; Text(name.isEmpty ? "Your Pause profile" : name).font(.system(size: 32, weight: .bold, design: .serif)).foregroundStyle(.white); Text(statement).foregroundStyle(.white.opacity(0.7)); HStack { MetricPill(value: "\(minutes)m", label: "focused"); MetricPill(value: "\(realSessions.count)", label: "journeys"); MetricPill(value: "\(achievements.count)", label: "milestones") }.foregroundStyle(.white) } } }
+    private var personalDetails: some View { EditorialCard { VStack(alignment: .leading, spacing: 14) { Text("Personal profile").font(.title3.bold()); TextField("Display name", text: $name).textFieldStyle(.roundedBorder); TextField("What do you want technology to support?", text: $statement, axis: .vertical).textFieldStyle(.roundedBorder); Button("Save changes") { model.preferences.displayName = name.trimmingCharacters(in: .whitespaces); model.preferences.focusStatement = statement; model.objectWillChange.send() }.buttonStyle(SoftButtonStyle()) } } }
+    private var shareCard: some View { EditorialCard(color: PauseTheme.sage) { VStack(alignment: .leading, spacing: 13) { Label("Share progress, not private reflections", systemImage: "lock.shield.fill").font(.headline); Text("Your share card includes only your name and overall journey totals.").font(.subheadline).foregroundStyle(PauseTheme.muted); ShareLink(item: "\(name.isEmpty ? "I" : name) completed \(realSessions.count) intentional focus journeys and \(minutes) mindful minutes with Pause.") { Label("Share my journey", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity) }.buttonStyle(SoftButtonStyle()) } } }
+}
+
+struct MindfulAchievement: Identifiable { let id: String; let title: String; let detail: String; let symbol: String
+    static func unlocked(from sessions: [IntentionalSession], weeklyReflection: String) -> [Self] {
+        var result: [Self] = []
+        func add(_ condition: Bool, _ id: String, _ title: String, _ detail: String, _ symbol: String) { if condition { result.append(.init(id: id, title: title, detail: detail, symbol: symbol)) } }
+        add(!sessions.isEmpty, "launch", "First Launch", "Completed a first journey", "paperplane.fill")
+        add(sessions.filter { !$0.task.isEmpty }.count >= 5, "intent", "Intentional Start", "Named five clear intentions", "scope")
+        add(sessions.filter { $0.focusRating > 0 }.count >= 5, "honest", "Honest Explorer", "Reflected five times", "text.bubble.fill")
+        add(Set(sessions.map { Calendar.current.startOfDay(for: $0.plannedStart) }).count >= 3, "return", "Returning Traveler", "Focused on three days", "arrow.uturn.backward")
+        add(sessions.contains { $0.actualMinutes >= 40 }, "deep", "Deep Orbit", "Completed a 40-minute journey", "circle.dotted")
+        add(sessions.count >= 7, "steady", "Steady Journey", "Completed seven journeys", "map.fill")
+        add(!weeklyReflection.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, "week", "Mindful Week", "Wrote a weekly reflection", "calendar")
+        return result
+    }
+}
+
+struct PlanetBadge: View { let achievement: MindfulAchievement
+    var body: some View { VStack(spacing: 9) { Image(systemName: achievement.symbol).font(.title2).foregroundStyle(.white).frame(width: 64, height: 64).background(PauseTheme.orange, in: Circle()); Text(achievement.title).font(.caption.bold()); Text(achievement.detail).font(.caption2).foregroundStyle(PauseTheme.muted).multilineTextAlignment(.center).lineLimit(2) }.frame(width: 120) }
 }
