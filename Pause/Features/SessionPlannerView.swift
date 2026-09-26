@@ -7,6 +7,7 @@ struct SessionPlannerView: View {
     @State private var task = ""
     @State private var duration = 25
     private let presets = [10, 15, 25, 40]
+    private let suggestions = ["Review today’s class notes", "Draft one clear section", "Practice five problems"]
 
     var body: some View {
         ZStack {
@@ -59,6 +60,25 @@ struct SessionPlannerView: View {
                 .font(.title3.weight(.medium)).lineLimit(2...4).focused($taskFieldFocused)
                 .padding(20).background(PauseTheme.paper, in: RoundedRectangle(cornerRadius: 20)).overlay(RoundedRectangle(cornerRadius: 20).stroke(PauseTheme.ink.opacity(0.1)))
                 .submitLabel(.next).onSubmit { if !taskTrimmed.isEmpty { next() } }
+            VStack(alignment: .leading, spacing: 10) {
+                Text("A FEW IDEAS").font(.caption.bold()).tracking(1.2).foregroundStyle(PauseTheme.muted)
+                ForEach(suggestions, id: \.self) { suggestion in
+                    Button {
+                        task = suggestion
+                        taskFieldFocused = false
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "arrow.up.left").font(.caption.bold()).foregroundStyle(PauseTheme.orange)
+                            Text(suggestion).font(.subheadline.weight(.semibold))
+                            Spacer()
+                        }
+                        .padding(.horizontal, 16).frame(minHeight: 48)
+                        .background(PauseTheme.sage.opacity(task == suggestion ? 1 : 0.48), in: RoundedRectangle(cornerRadius: 15))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Uses this as your focus intention")
+                }
+            }
             Spacer()
         }
     }
