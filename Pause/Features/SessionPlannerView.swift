@@ -6,7 +6,8 @@ struct SessionPlannerView: View {
     @State private var step = 0
     @State private var task = ""
     @State private var duration = 25
-    private let presets = [10, 15, 25, 40]
+    @State private var isCustomDuration = false
+    private let presets = [15, 25, 40]
     private let suggestions = ["Review today’s class notes", "Draft one clear section", "Practice five problems"]
 
     var body: some View {
@@ -90,10 +91,22 @@ struct SessionPlannerView: View {
             Text("A smaller promise is often easier to keep.").font(.title3).foregroundStyle(PauseTheme.muted)
             VStack(spacing: 10) {
                 ForEach(presets, id: \.self) { value in
-                    Button { duration = value } label: {
-                        HStack { Text("\(value) minutes").font(.title3.weight(.semibold)); Spacer(); Image(systemName: duration == value ? "checkmark.circle.fill" : "circle").font(.title3).foregroundStyle(duration == value ? PauseTheme.orange : PauseTheme.muted) }
-                            .padding(.horizontal, 20).frame(height: 62).background(duration == value ? PauseTheme.sage : PauseTheme.paper, in: RoundedRectangle(cornerRadius: 18))
+                    Button { duration = value; isCustomDuration = false } label: {
+                        HStack { Text("\(value) minutes").font(.title3.weight(.semibold)); Spacer(); Image(systemName: !isCustomDuration && duration == value ? "checkmark.circle.fill" : "circle").font(.title3).foregroundStyle(!isCustomDuration && duration == value ? PauseTheme.orange : PauseTheme.muted) }
+                            .padding(.horizontal, 20).frame(height: 62).background(!isCustomDuration && duration == value ? PauseTheme.sage : PauseTheme.paper, in: RoundedRectangle(cornerRadius: 18))
                     }.buttonStyle(.plain)
+                }
+                Button { if !isCustomDuration { duration = 30 }; isCustomDuration = true } label: {
+                    HStack { Text("Custom").font(.title3.weight(.semibold)); Spacer(); Text(isCustomDuration ? "\(duration) min" : "Choose").font(.subheadline.weight(.semibold)).foregroundStyle(PauseTheme.muted); Image(systemName: isCustomDuration ? "checkmark.circle.fill" : "circle").font(.title3).foregroundStyle(isCustomDuration ? PauseTheme.orange : PauseTheme.muted) }
+                        .padding(.horizontal, 20).frame(height: 62).background(isCustomDuration ? PauseTheme.sage : PauseTheme.paper, in: RoundedRectangle(cornerRadius: 18))
+                }.buttonStyle(.plain)
+                if isCustomDuration {
+                    HStack(spacing: 22) {
+                        Button { duration = max(5, duration - 5) } label: { Image(systemName: "minus").frame(width: 48, height: 48).background(PauseTheme.paper, in: Circle()) }.disabled(duration <= 5).accessibilityLabel("Remove five minutes")
+                        Text("\(duration)").font(.system(size: 40, weight: .bold, design: .rounded)).monospacedDigit().frame(minWidth: 72)
+                        Text("minutes").font(.subheadline).foregroundStyle(PauseTheme.muted)
+                        Button { duration = min(120, duration + 5) } label: { Image(systemName: "plus").frame(width: 48, height: 48).background(PauseTheme.paper, in: Circle()) }.disabled(duration >= 120).accessibilityLabel("Add five minutes")
+                    }.frame(maxWidth: .infinity).padding(.vertical, 8)
                 }
             }
             Spacer()
