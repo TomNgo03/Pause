@@ -26,10 +26,10 @@ struct ActiveSessionView: View {
         }
         .foregroundStyle(PauseTheme.ink)
         .toolbar(.hidden, for: .navigationBar)
-        .confirmationDialog("End this focus session?", isPresented: $showingEndConfirmation) {
-            Button("Finish and reflect") { Task { await model.finishSession() } }
-            Button("Discard session", role: .destructive) { Task { await model.cancelSession() } }
+        .alert("End this focus session?", isPresented: $showingEndConfirmation) {
             Button("Keep focusing", role: .cancel) {}
+            Button("Finish and reflect") { Task { await model.finishSession() } }
+            Button("Discard", role: .destructive) { Task { await model.cancelSession() } }
         } message: {
             Text("You can still reflect even when a session ends earlier than planned.")
         }
@@ -104,8 +104,13 @@ struct ActiveSessionView: View {
             HStack(spacing: 12) {
                 Button { Task { await model.extendSession() } } label: { Label("Add 5 min", systemImage: "plus") }
                     .buttonStyle(SoftButtonStyle())
-                Button { showingEndConfirmation = true } label: { Text("End session") }
+                Button {
+                    showingEndConfirmation = true
+                } label: {
+                    Label("End session", systemImage: "stop.fill")
+                }
                     .buttonStyle(SoftButtonStyle())
+                    .accessibilityIdentifier("endSession")
             }
         }
     }
