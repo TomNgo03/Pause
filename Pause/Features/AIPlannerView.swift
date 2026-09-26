@@ -15,7 +15,18 @@ struct AIPlannerView: View {
 
     var body: some View {
         ZStack { PauseBackground(); ScrollView(showsIndicators: false) { VStack(alignment: .leading, spacing: 24) {
-            VStack(alignment: .leading, spacing: 6) { Text("COACH").font(.caption.bold()).tracking(1.5).foregroundStyle(PauseTheme.orange); Text("Turn pressure into\na possible plan.").font(.system(size: 37, weight: .bold, design: .serif)); Text(model.planner.onDeviceAIStatus()).foregroundStyle(PauseTheme.muted); Text("A private local plan remains available if AI cannot run.").font(.caption).foregroundStyle(PauseTheme.muted) }
+            VStack(alignment: .leading, spacing: 12) {
+                Text("AI FOCUS COACH").font(.caption.bold()).tracking(1.5).foregroundStyle(PauseTheme.orange)
+                Text("Turn pressure into\na possible plan.").font(.system(size: 37, weight: .bold, design: .serif))
+                HStack(spacing: 12) {
+                    Image(systemName: model.planner.isOnDeviceAIAvailable() ? "apple.intelligence" : "exclamationmark.circle.fill").font(.title3).foregroundStyle(model.planner.isOnDeviceAIAvailable() ? PauseTheme.orange : PauseTheme.muted)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(model.planner.isOnDeviceAIAvailable() ? "Apple Intelligence ready" : "AI currently unavailable").font(.subheadline.bold())
+                        Text(model.planner.onDeviceAIStatus()).font(.caption).foregroundStyle(PauseTheme.muted)
+                    }
+                }.padding(15).frame(maxWidth: .infinity, alignment: .leading).background(model.planner.isOnDeviceAIAvailable() ? PauseTheme.sage : PauseTheme.paper, in: RoundedRectangle(cornerRadius: 16))
+                Text("Your task stays on this device. A private local planner remains available when AI cannot run.").font(.caption).foregroundStyle(PauseTheme.muted)
+            }
             if let plan { planView(plan) } else { inputView }
         }.padding(20).padding(.bottom, 30).frame(maxWidth: 700) } }.foregroundStyle(PauseTheme.ink).toolbar(.hidden, for: .navigationBar).onAppear { restorePlan() }
     }
@@ -26,7 +37,7 @@ struct AIPlannerView: View {
         coachField("Time available today") { Stepper("\(minutes) minutes", value: $minutes, in: 10...180, step: 5) }
         HStack(spacing: 12) { coachField("Energy") { Picker("Energy", selection: $energy) { ForEach(AIPlanRequest.EnergyLevel.allCases) { Text($0.rawValue).tag($0) } }.pickerStyle(.menu) }; coachField("Style") { Picker("Style", selection: $style) { ForEach(AIPlanRequest.FocusStyle.allCases) { Text($0.rawValue).tag($0) } }.pickerStyle(.menu) } }
         coachField("Constraints (optional)") { TextField("Breaks, resources, or limits", text: $constraints, axis: .vertical) }
-        Button { Task { await generate() } } label: { if loading { ProgressView().tint(.white) } else { Label("Create my plan", systemImage: "wand.and.stars") } }.buttonStyle(PrimaryButtonStyle()).disabled(loading || task.trimmingCharacters(in: .whitespaces).isEmpty)
+        Button { Task { await generate() } } label: { if loading { HStack { ProgressView().tint(.white); Text(model.planner.isOnDeviceAIAvailable() ? "AI is creating your plan…" : "Building your plan…") } } else { Label(model.planner.isOnDeviceAIAvailable() ? "Generate with on-device AI" : "Create with local planner", systemImage: model.planner.isOnDeviceAIAvailable() ? "apple.intelligence" : "wand.and.stars") } }.buttonStyle(PrimaryButtonStyle()).disabled(loading || task.trimmingCharacters(in: .whitespaces).isEmpty)
         Label("Do not enter passwords, diagnoses, or confidential information. Coach is planning support, not professional advice.", systemImage: "lock.fill").font(.caption).foregroundStyle(PauseTheme.muted)
     } }
 
@@ -35,7 +46,10 @@ struct AIPlannerView: View {
         ForEach(Array(plan.steps.enumerated()), id: \.element.id) { index, step in
             EditorialCard { HStack(alignment: .top, spacing: 14) { Button { toggle(step.id) } label: { Image(systemName: completed.contains(step.id) ? "checkmark.circle.fill" : "circle").font(.title2).foregroundStyle(completed.contains(step.id) ? PauseTheme.orange : PauseTheme.muted) }; VStack(alignment: .leading, spacing: 6) { Text("STEP 0\(index + 1)").font(.caption.bold()).tracking(1).foregroundStyle(PauseTheme.orange); Text(step.title).font(.headline).strikethrough(completed.contains(step.id)); Text("\(step.durationMinutes) min focus" + (step.breakMinutes > 0 ? " · \(step.breakMinutes) min break" : "")).font(.caption).foregroundStyle(PauseTheme.muted) }; Spacer(); Button { start(step) } label: { Image(systemName: "play.fill").foregroundStyle(.white).frame(width: 42, height: 42).background(PauseTheme.forest, in: Circle()) }.accessibilityLabel("Start this step") } }
         }
-        HStack { Button("Replace plan") { self.plan = nil; completed = []; savePlan(nil) }.buttonStyle(SoftButtonStyle()); if let first = plan.steps.first { Button("Start first step") { start(first) }.buttonStyle(PrimaryButtonStyle()) } }
+        if generationSource == .localPlanner && model.planner.isOnDeviceAIAvailable() {
+            Button { self.plan = nil; completed = []; savePlan(nil) } label: { Label("Try on-device AI", systemImage: "apple.intelligence") }.buttonStyle(PrimaryButtonStyle())
+        }
+        HStack { Button("Create a new plan") { self.plan = nil; completed = []; savePlan(nil) }.buttonStyle(SoftButtonStyle()); if let first = plan.steps.first { Button("Start first step") { start(first) }.buttonStyle(PrimaryButtonStyle()) } }
     } }
 
     private func coachField<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View { EditorialCard { VStack(alignment: .leading, spacing: 10) { Text(title).font(.headline); content() } } }

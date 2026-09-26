@@ -38,6 +38,13 @@ struct AIPlanningService {
         return "Requires iOS or iPadOS 26"
     }
 
+    func isOnDeviceAIAvailable() -> Bool {
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, *) { return SystemLanguageModel.default.isAvailable }
+        #endif
+        return false
+    }
+
     func createPlan(_ request: AIPlanRequest) async throws -> AIPlan {
         try await createPlanWithSource(request).plan
     }
