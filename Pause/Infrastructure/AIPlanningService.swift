@@ -59,7 +59,7 @@ struct AIPlanningService {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *), SystemLanguageModel.default.isAvailable {
             do {
-                let plan = try await createOnDevicePlan(request)
+                let plan = normalized(try await createOnDevicePlan(request), availableMinutes: request.availableMinutes)
                 return GeneratedPlan(plan: try PlanValidator.validate(plan, availableMinutes: request.availableMinutes), source: .onDeviceAI)
             } catch {
                 // A useful local plan remains available if generation is interrupted or rejected.
@@ -75,7 +75,7 @@ struct AIPlanningService {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *), SystemLanguageModel.default.isAvailable {
             do {
-                let plans = try await createOnDevicePlanOptions(goal: cleanGoal, availableMinutes: availableMinutes)
+                let plans = try await createOnDevicePlanOptions(goal: cleanGoal, availableMinutes: availableMinutes).map { normalized($0, availableMinutes: availableMinutes) }
                 let validated = try plans.map { try PlanValidator.validate($0, availableMinutes: availableMinutes) }
                 guard validated.count == 3 else { throw PlanningError.invalidResponse }
                 return GeneratedPlanOptions(plans: validated, source: .onDeviceAI)
@@ -98,6 +98,13 @@ struct AIPlanningService {
     func offlinePlan(_ request: AIPlanRequest) -> AIPlan {
         let available = max(10, min(180, request.availableMinutes))
         let focusLength: Int = switch request.style { case .short: 15; case .balanced: 25; case .deep: 40 }
+        let actionTitles = [
+            "Define the smallest useful outcome and list what you need to know first",
+            "Learn one prerequisite concept using a clear worked example",
+            "Follow one guided practice problem and explain each step",
+            "Try one similar problem without looking at the solution",
+            "Review mistakes and write the exact next practice step"
+        ]
         var remaining = available
         var steps: [AIPlanStep] = []
         var number = 1
@@ -106,10 +113,35 @@ struct AIPlanningService {
             remaining -= work
             let pause = remaining >= 5 ? 5 : 0
             if pause > 0 { remaining -= pause }
-            steps.append(AIPlanStep(title: number == 1 ? "Start: \(request.task)" : "Continue with the next concrete part", durationMinutes: work, breakMinutes: pause, intention: .learning))
+            let action = actionTitles[min(number - 1, actionTitles.count - 1)]
+            steps.append(AIPlanStep(title: number == 1 ? "For ‘\(request.task)’: \(action.lowercased())" : action, durationMinutes: work, breakMinutes: pause, intention: .learning))
             number += 1
         }
         return AIPlan(title: "A realistic plan for \(request.task)", summary: "A private offline draft based on your time and preferred focus style. Edit anything before accepting.", totalMinutes: available, steps: steps, safetyNote: "Protect sleep, meals, movement, and urgent communication.")
+    }
+
+    private func normalized(_ plan: AIPlan, availableMinutes: Int) -> AIPlan {
+        let limit = max(10, min(180, availableMinutes))
+        let original = plan.steps.prefix(5)
+        let originalTotal = original.reduce(0) { $0 + $1.durationMinutes + $1.breakMinutes }
+        guard originalTotal > limit else { return plan }
+        let scale = Double(limit) / Double(originalTotal)
+        var remaining = limit
+        var steps: [AIPlanStep] = []
+        for (index, step) in original.enumerated() {
+            let stepsLeft = original.count - index - 1
+            let maximumWork = max(1, remaining - stepsLeft)
+            let work = min(maximumWork, max(1, Int(Double(step.durationMinutes) * scale)))
+            remaining -= work
+            let suggestedBreak = max(0, Int(Double(step.breakMinutes) * scale))
+            let breakMinutes = index == original.count - 1 ? 0 : min(suggestedBreak, max(0, remaining - stepsLeft))
+            remaining -= breakMinutes
+            steps.append(AIPlanStep(title: step.title, durationMinutes: work, breakMinutes: breakMinutes, intention: step.intention))
+        }
+        var copy = plan
+        copy.steps = steps
+        copy.totalMinutes = steps.reduce(0) { $0 + $1.durationMinutes + $1.breakMinutes }
+        return copy
     }
 }
 

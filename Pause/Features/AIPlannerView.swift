@@ -132,7 +132,17 @@ struct AIPlannerView: View {
     private func save(_ plan: AIPlan) { UserDefaults.standard.set(try? JSONEncoder().encode(plan), forKey: "activeFocusPlan"); UserDefaults.standard.set(generationSource.rawValue, forKey: "activeFocusPlanSource") }
     private func start(_ step: AIPlanStep) { let now = Date.now; Task { await model.start(SessionDraft(intention: step.intention, plannedStart: now, plannedEnd: now.addingTimeInterval(Double(step.durationMinutes * 60)), task: step.title)) } }
     private func reset() { plans = []; chosenIndex = nil; selectedIndex = 0; screen = .prompt; UserDefaults.standard.removeObject(forKey: "activeFocusPlan") }
-    private func restoreSavedPlan() { guard plans.isEmpty, let data = UserDefaults.standard.data(forKey: "activeFocusPlan"), let saved = try? JSONDecoder().decode(AIPlan.self, from: data) else { return }; plans = [saved]; selectedIndex = 0; chosenIndex = 0; generationSource = PlanGenerationSource(rawValue: UserDefaults.standard.string(forKey: "activeFocusPlanSource") ?? "") ?? .localPlanner; screen = .choices }
+    private func restoreSavedPlan() {
+        guard plans.isEmpty, let data = UserDefaults.standard.data(forKey: "activeFocusPlan"), let saved = try? JSONDecoder().decode(AIPlan.self, from: data) else { return }
+        if saved.steps.contains(where: { $0.title == "Continue with the next concrete part" }) {
+            UserDefaults.standard.removeObject(forKey: "activeFocusPlan")
+            UserDefaults.standard.removeObject(forKey: "activeFocusPlanSource")
+            return
+        }
+        plans = [saved]; selectedIndex = 0; chosenIndex = 0
+        generationSource = PlanGenerationSource(rawValue: UserDefaults.standard.string(forKey: "activeFocusPlanSource") ?? "") ?? .localPlanner
+        screen = .choices
+    }
 }
 
 private enum CoachScreen { case prompt, generating, choices }
