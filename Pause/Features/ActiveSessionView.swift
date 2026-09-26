@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ActiveSessionView: View {
     @EnvironmentObject private var model: AppModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showingCancel = false
 
     var body: some View {
@@ -16,11 +17,12 @@ struct ActiveSessionView: View {
             StarField().ignoresSafeArea()
 
             TimelineView(.periodic(from: .now, by: 1)) { context in
-                let progress = progress(at: context.date)
+                let effectiveDate = model.sessionPausedAt ?? context.date
+                let progress = progress(at: effectiveDate)
 
                 VStack(spacing: 26) {
                     HStack {
-                        Label("FOCUSING", systemImage: "circle.fill")
+                        Label(model.sessionPausedAt == nil ? "FOCUSING" : "PAUSED", systemImage: "circle.fill")
                             .font(.caption.bold())
                             .foregroundStyle(PauseTheme.mint)
                         Spacer()
@@ -41,10 +43,10 @@ struct ActiveSessionView: View {
                                 style: StrokeStyle(lineWidth: 11, lineCap: .round)
                             )
                             .rotationEffect(.degrees(-90))
-                            .animation(.linear(duration: 0.8), value: progress)
+                            .animation(reduceMotion ? nil : .linear(duration: 0.8), value: progress)
 
                         VStack(spacing: 6) {
-                            Text(remaining(at: context.date))
+                            Text(remaining(at: effectiveDate))
                                 .font(.system(size: 48, weight: .bold, design: .rounded))
                                 .monospacedDigit()
                             Text("until arrival")
@@ -69,17 +71,22 @@ struct ActiveSessionView: View {
                             .font(.caption.weight(.semibold))
                             .textCase(.uppercase)
                             .foregroundStyle(.white.opacity(0.55))
-                        Text(model.activeSession?.intention.rawValue ?? "Your intention")
+                        Text(model.activeSession?.task.isEmpty == false ? model.activeSession!.task : model.activeSession?.intention.rawValue ?? "Your intention")
                             .font(.title2.bold())
                             .multilineTextAlignment(.center)
                     }
 
                     Spacer()
 
+                    Button(model.sessionPausedAt == nil ? "Pause journey" : "Resume journey") {
+                        Task { await model.togglePause() }
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+
                     Button("Finish and reflect") {
                         Task { await model.finishSession() }
                     }
-                    .buttonStyle(PrimaryButtonStyle())
+                    .font(.subheadline.weight(.semibold)).foregroundStyle(.white)
                     .accessibilityIdentifier("finishSession")
 
                     HStack {

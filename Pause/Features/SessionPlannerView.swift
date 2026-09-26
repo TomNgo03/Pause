@@ -2,55 +2,41 @@ import SwiftUI
 
 struct SessionPlannerView: View {
     @EnvironmentObject private var model: AppModel
-    @State private var step = 0
-    @State private var intention: IntentionCategory?
-    @State private var duration = 10
-    private let durations = [2, 5, 10, 15, 20, 30]
+    @State private var task = ""
+    @State private var category: IntentionCategory = .learning
+    @State private var duration = 25
+    @State private var customDuration = 25.0
+    @State private var energy: EnergyLevel = .steady
+    @State private var distraction: SessionDistraction = .none
+    @State private var success = ""
+    private let presets = [15, 25, 40, 60]
 
     var body: some View {
-        ZStack {
-            PauseBackground()
-            VStack(spacing: 0) {
-                progress
-                ScrollView { Group { if step == 0 { intentionStep } else { timeStep } }.padding(20) }
-                footer.padding(20).background(PauseTheme.card)
-            }
-        }
-        .navigationTitle(step == 0 ? "What is your intention?" : "How long do you need?").navigationBarTitleDisplayMode(.inline)
+        ZStack { PauseBackground(); ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                Text("Set one clear\nintention.").font(.system(size: 39, weight: .bold, design: .serif))
+                field("What will you accomplish?") { TextField("e.g. Draft the introduction", text: $task, axis: .vertical).lineLimit(2...4) }
+                field("Category") { Picker("Category", selection: $category) { ForEach(IntentionCategory.allCases) { Text($0.rawValue).tag($0) } }.pickerStyle(.menu) }
+                field("How long?") {
+                    HStack { ForEach(presets, id: \.self) { value in Button("\(value)m") { duration = value; customDuration = Double(value) }.buttonStyle(PlannerChip(selected: duration == value)) } }
+                    Slider(value: $customDuration, in: 5...90, step: 5) { Text("Custom duration") }.onChange(of: customDuration) { _, value in duration = Int(value) }
+                    Text("\(duration) minutes").font(.caption.bold()).foregroundStyle(PauseTheme.muted)
+                }
+                field("Your energy") { HStack { ForEach(EnergyLevel.allCases) { value in Button(value.rawValue) { energy = value }.buttonStyle(PlannerChip(selected: energy == value)) } } }
+                field("What might pull you away?") { Picker("Likely distraction", selection: $distraction) { ForEach(SessionDistraction.allCases) { Text($0.rawValue).tag($0) } }.pickerStyle(.menu) }
+                field("Success means… (optional)") { TextField("A small, visible outcome", text: $success, axis: .vertical) }
+                if !taskTrimmed.isEmpty { EditorialCard(color: PauseTheme.sage) { VStack(alignment: .leading, spacing: 8) { Text("YOUR COMMITMENT").font(.caption.bold()).tracking(1.4); Text("For the next \(duration) minutes, I will \(taskTrimmed.lowercased()).").font(.title3.weight(.semibold)) } } }
+                Button("Begin journey") { begin() }.buttonStyle(PrimaryButtonStyle()).disabled(taskTrimmed.isEmpty)
+            }.padding(22).frame(maxWidth: 650)
+        } }.foregroundStyle(PauseTheme.ink).navigationTitle("New session").navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { model.route = .home } } }
     }
 
-    private var progress: some View { HStack(spacing: 8) { Capsule().fill(PauseTheme.indigo).frame(height: 5); Capsule().fill(step == 1 ? PauseTheme.indigo : Color.secondary.opacity(0.15)).frame(height: 5) }.padding(.horizontal, 20).padding(.top, 8) }
+    private var taskTrimmed: String { task.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private func field<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View { VStack(alignment: .leading, spacing: 10) { Text(label).font(.headline); content().padding(16).frame(maxWidth: .infinity, alignment: .leading).background(PauseTheme.paper, in: RoundedRectangle(cornerRadius: 18)).overlay(RoundedRectangle(cornerRadius: 18).stroke(PauseTheme.ink.opacity(0.1))) } }
+    private func begin() { let now = Date.now; let draft = SessionDraft(intention: category, plannedStart: now, plannedEnd: now.addingTimeInterval(Double(duration * 60)), task: taskTrimmed, energy: energy, expectedDistraction: distraction, successStatement: success); Task { await model.start(draft) } }
+}
 
-    private var intentionStep: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Choose the closest answer. It does not need to be perfect.").foregroundStyle(.secondary).padding(.bottom, 4)
-            ForEach(IntentionCategory.allCases) { item in
-                Button { intention = item } label: { HStack(spacing: 13) { PauseIcon(systemName: icon(for: item), color: color(for: item), size: 42); Text(item.rawValue).font(.headline).foregroundStyle(.primary); Spacer(); Image(systemName: intention == item ? "checkmark.circle.fill" : "circle").foregroundStyle(intention == item ? PauseTheme.indigo : .secondary) }.padding(14).background(PauseTheme.card, in: RoundedRectangle(cornerRadius: 19)).overlay(RoundedRectangle(cornerRadius: 19).stroke(intention == item ? PauseTheme.indigo : .white.opacity(0.06), lineWidth: intention == item ? 2 : 1)) }.buttonStyle(.plain)
-            }
-        }
-    }
-
-    private var timeStep: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("Start smaller than you think. You can add time later without it counting as a failure.").foregroundStyle(.secondary)
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                ForEach(durations, id: \.self) { value in Button { duration = value } label: { VStack(spacing: 4) { Text("\(value)").font(.title.bold()); Text("minutes").font(.caption) }.frame(maxWidth: .infinity).padding(.vertical, 18).foregroundStyle(duration == value ? .white : .primary).background(duration == value ? AnyShapeStyle(PauseTheme.heroGradient) : AnyShapeStyle(PauseTheme.card), in: RoundedRectangle(cornerRadius: 18)) }.buttonStyle(.plain) }
-            }
-            if let intention { PauseCard { Label("\(intention.rawValue) for \(duration) minutes", systemImage: "checkmark.seal.fill").font(.headline).foregroundStyle(PauseTheme.indigo) } }
-        }
-    }
-
-    private var footer: some View {
-        HStack(spacing: 12) {
-            if step == 1 { Button("Back") { withAnimation { step = 0 } }.buttonStyle(SoftButtonStyle()).frame(maxWidth: 110) }
-            Button(step == 0 ? "Choose time" : "Begin session") {
-                if step == 0 { withAnimation(.snappy) { step = 1 } }
-                else if let intention { let now = Date.now; Task { await model.start(SessionDraft(intention: intention, plannedStart: now, plannedEnd: now.addingTimeInterval(Double(duration * 60)))) } }
-            }.buttonStyle(PrimaryButtonStyle()).disabled(intention == nil).accessibilityIdentifier(step == 0 ? "chooseTime" : "beginSession")
-        }
-    }
-
-    private func icon(for item: IntentionCategory) -> String { switch item { case .message: "message.fill"; case .information: "magnifyingglass"; case .learning: "book.fill"; case .plannedContent: "play.rectangle.fill"; case .connection: "person.2.fill"; case .breakTime: "cup.and.saucer.fill"; case .other: "ellipsis" } }
-    private func color(for item: IntentionCategory) -> Color { switch item { case .message: PauseTheme.sky; case .information: PauseTheme.violet; case .learning: PauseTheme.indigo; case .plannedContent: PauseTheme.coral; case .connection: PauseTheme.mint; case .breakTime: .orange; case .other: .secondary } }
+private struct PlannerChip: ButtonStyle { let selected: Bool
+    func makeBody(configuration: Configuration) -> some View { configuration.label.font(.caption.weight(.semibold)).padding(.horizontal, 12).frame(minHeight: 42).foregroundStyle(selected ? Color.white : PauseTheme.ink).background(selected ? PauseTheme.orange : PauseTheme.cream, in: Capsule()) }
 }
