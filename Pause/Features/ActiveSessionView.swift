@@ -2,117 +2,123 @@ import SwiftUI
 
 struct ActiveSessionView: View {
     @EnvironmentObject private var model: AppModel
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var showingCancel = false
+    @State private var showingEndConfirmation = false
+    @State private var showingIntention = false
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [PauseTheme.ink, PauseTheme.indigo.opacity(0.92)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
-
-            StarField().ignoresSafeArea()
-
+            PauseBackground()
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 let effectiveDate = model.sessionPausedAt ?? context.date
                 let progress = progress(at: effectiveDate)
 
-                VStack(spacing: 26) {
-                    HStack {
-                        Label(model.sessionPausedAt == nil ? "FOCUSING" : "PAUSED", systemImage: "circle.fill")
-                            .font(.caption.bold())
-                            .foregroundStyle(PauseTheme.mint)
-                        Spacer()
-                        Text("\(Int(progress * 100))% complete")
-                            .font(.caption.monospacedDigit())
-                            .foregroundStyle(.white.opacity(0.62))
-                    }
-
+                VStack(alignment: .leading, spacing: 0) {
+                    header(progress: progress)
                     Spacer()
-
-                    ZStack {
-                        Planet(progress: progress)
-                        Circle().stroke(.white.opacity(0.10), lineWidth: 11)
-                        Circle()
-                            .trim(from: 0, to: progress)
-                            .stroke(
-                                AngularGradient(colors: [.white, PauseTheme.mint], center: .center),
-                                style: StrokeStyle(lineWidth: 11, lineCap: .round)
-                            )
-                            .rotationEffect(.degrees(-90))
-                            .animation(reduceMotion ? nil : .linear(duration: 0.8), value: progress)
-
-                        VStack(spacing: 6) {
-                            Text(remaining(at: effectiveDate))
-                                .font(.system(size: 48, weight: .bold, design: .rounded))
-                                .monospacedDigit()
-                            Text("until arrival")
-                                .font(.subheadline)
-                                .foregroundStyle(.white.opacity(0.66))
-                        }
-
-                        Image(systemName: "paperplane.fill")
-                            .foregroundStyle(.white)
-                            .rotationEffect(.degrees(progress * 360 + 42))
-                            .offset(
-                                x: CGFloat(cos(progress * .pi * 2 - .pi / 2)) * 145,
-                                y: CGFloat(sin(progress * .pi * 2 - .pi / 2)) * 145
-                            )
-                            .shadow(color: PauseTheme.mint.opacity(0.7), radius: 8)
-                    }
-                    .frame(width: 280, height: 280)
-                    .accessibilityElement(children: .combine)
-
-                    VStack(spacing: 7) {
-                        Text("Your intention")
-                            .font(.caption.weight(.semibold))
-                            .textCase(.uppercase)
-                            .foregroundStyle(.white.opacity(0.55))
-                        Text(model.activeSession?.task.isEmpty == false ? model.activeSession!.task : model.activeSession?.intention.rawValue ?? "Your intention")
-                            .font(.title2.bold())
-                            .multilineTextAlignment(.center)
-                    }
-
+                    countdown(at: effectiveDate)
                     Spacer()
-
-                    Button(model.sessionPausedAt == nil ? "Pause journey" : "Resume journey") {
-                        Task { await model.togglePause() }
-                    }
-                    .buttonStyle(PrimaryButtonStyle())
-
-                    Button("Finish and reflect") {
-                        Task { await model.finishSession() }
-                    }
-                    .font(.subheadline.weight(.semibold)).foregroundStyle(.white)
-                    .accessibilityIdentifier("finishSession")
-
-                    HStack {
-                        Button("Add 5 min") { Task { await model.extendSession() } }
-                        Spacer()
-                        Button("Cancel", role: .destructive) { showingCancel = true }
-                    }
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.white.opacity(0.78))
-                    .padding(.horizontal, 8)
+                    controls
                 }
-                .padding(24)
-                .foregroundStyle(.white)
+                .padding(.horizontal, 24)
+                .padding(.top, 18)
+                .padding(.bottom, 28)
             }
         }
+        .foregroundStyle(PauseTheme.ink)
         .toolbar(.hidden, for: .navigationBar)
-        .confirmationDialog("Cancel this session?", isPresented: $showingCancel) {
-            Button("Cancel session", role: .destructive) { Task { await model.cancelSession() } }
+        .confirmationDialog("End this focus session?", isPresented: $showingEndConfirmation) {
+            Button("Finish and reflect") { Task { await model.finishSession() } }
+            Button("Discard session", role: .destructive) { Task { await model.cancelSession() } }
             Button("Keep focusing", role: .cancel) {}
+        } message: {
+            Text("You can still reflect even when a session ends earlier than planned.")
         }
+    }
+
+    private func header(progress: Double) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Label(model.sessionPausedAt == nil ? "FOCUS SESSION" : "SESSION PAUSED", systemImage: model.sessionPausedAt == nil ? "circle.fill" : "pause.fill")
+                    .font(.caption.bold()).tracking(1.3).foregroundStyle(PauseTheme.orange)
+                Spacer()
+                Text("\(Int(progress * 100))%")
+                    .font(.caption.monospacedDigit().weight(.semibold)).foregroundStyle(PauseTheme.muted)
+            }
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(PauseTheme.ink.opacity(0.09))
+                    Capsule().fill(PauseTheme.orange).frame(width: geometry.size.width * progress)
+                }
+            }
+            .frame(height: 6)
+            .accessibilityLabel("Session progress")
+            .accessibilityValue("\(Int(progress * 100)) percent")
+        }
+    }
+
+    private func countdown(at date: Date) -> some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text(model.sessionPausedAt == nil ? "Stay with this\none thing." : "Take the moment\nyou need.")
+                .font(.system(size: 36, weight: .bold, design: .serif))
+                .tracking(-0.8)
+
+            Text(remaining(at: date))
+                .font(.system(size: 82, weight: .medium, design: .rounded))
+                .monospacedDigit()
+                .contentTransition(.numericText(countsDown: true))
+                .minimumScaleFactor(0.65)
+                .lineLimit(1)
+                .accessibilityLabel("Time remaining")
+
+            Button { withAnimation(.easeOut(duration: 0.2)) { showingIntention.toggle() } } label: {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "scope").foregroundStyle(PauseTheme.orange).padding(.top, 2)
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("YOUR INTENTION").font(.caption.bold()).tracking(1.2).foregroundStyle(PauseTheme.muted)
+                        Text(sessionTitle).font(.title3.weight(.semibold)).multilineTextAlignment(.leading)
+                        if showingIntention, let statement = model.activeSession?.successStatement, !statement.isEmpty {
+                            Text("Success means: \(statement)").font(.subheadline).foregroundStyle(PauseTheme.muted).padding(.top, 3)
+                        }
+                    }
+                    Spacer()
+                    Image(systemName: showingIntention ? "chevron.up" : "chevron.down").font(.caption.bold()).foregroundStyle(PauseTheme.muted)
+                }
+                .padding(18)
+                .background(PauseTheme.sage, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Shows the success statement")
+        }
+    }
+
+    private var controls: some View {
+        VStack(spacing: 14) {
+            Button {
+                UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+                Task { await model.togglePause() }
+            } label: {
+                Label(model.sessionPausedAt == nil ? "Pause" : "Resume", systemImage: model.sessionPausedAt == nil ? "pause.fill" : "play.fill")
+            }
+            .buttonStyle(PrimaryButtonStyle())
+
+            HStack(spacing: 12) {
+                Button { Task { await model.extendSession() } } label: { Label("Add 5 min", systemImage: "plus") }
+                    .buttonStyle(SoftButtonStyle())
+                Button { showingEndConfirmation = true } label: { Text("End session") }
+                    .buttonStyle(SoftButtonStyle())
+            }
+        }
+    }
+
+    private var sessionTitle: String {
+        guard let session = model.activeSession else { return "Your intention" }
+        return session.task.isEmpty ? session.intention.rawValue : session.task
     }
 
     private func remaining(at date: Date) -> String {
         guard let end = model.activeSession?.plannedEnd else { return "00:00" }
         let seconds = max(0, Int(end.timeIntervalSince(date)))
-        if seconds == 0 { Task { await model.finishSession() } }
+        if seconds == 0, model.sessionPausedAt == nil { Task { await model.finishSession() } }
         return String(format: "%02d:%02d", seconds / 60, seconds % 60)
     }
 
@@ -121,54 +127,5 @@ struct ActiveSessionView: View {
         let total = session.plannedEnd.timeIntervalSince(session.plannedStart)
         guard total > 0 else { return 0 }
         return min(1, max(0, date.timeIntervalSince(session.plannedStart) / total))
-    }
-}
-
-private struct StarField: View {
-    var body: some View {
-        Canvas { context, size in
-            for index in 0..<70 {
-                let x = CGFloat((index * 47) % 101) / 100 * size.width
-                let y = CGFloat((index * 83) % 103) / 102 * size.height
-                let radius: CGFloat = index.isMultiple(of: 9) ? 1.8 : 0.8
-                let star = CGRect(x: x, y: y, width: radius * 2, height: radius * 2)
-                context.fill(
-                    Path(ellipseIn: star),
-                    with: .color(.white.opacity(index.isMultiple(of: 3) ? 0.72 : 0.35))
-                )
-            }
-        }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-    }
-}
-
-private struct Planet: View {
-    let progress: Double
-
-    var body: some View {
-        Circle()
-            .fill(
-                RadialGradient(
-                    colors: [
-                        PauseTheme.violet.opacity(0.88),
-                        PauseTheme.indigo.opacity(0.70),
-                        PauseTheme.ink
-                    ],
-                    center: .topLeading,
-                    startRadius: 10,
-                    endRadius: 150
-                )
-            )
-            .overlay(alignment: .topLeading) {
-                Circle().fill(.white.opacity(0.10)).frame(width: 46).offset(x: 48, y: 55)
-            }
-            .overlay(alignment: .bottomTrailing) {
-                Circle().fill(.black.opacity(0.16)).frame(width: 33).offset(x: -52, y: -48)
-            }
-            .shadow(color: PauseTheme.violet.opacity(0.38), radius: 32)
-            .scaleEffect(0.86 + progress * 0.08)
-            .padding(18)
-            .accessibilityHidden(true)
     }
 }
