@@ -22,6 +22,7 @@ struct RootView: View {
                     case .routines: RoutinesView()
                     case .guides: GuidesView()
                     case .insights: CareInsightsView()
+                    case .demoStory: DemoStoryView()
                     case .appSelection: ProtectedAppsView()
                     case .plan: SessionPlannerView()
                     case .aiPlanner: AIPlannerView()

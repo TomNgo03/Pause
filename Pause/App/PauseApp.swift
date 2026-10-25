@@ -14,6 +14,7 @@ struct PauseApp: App {
                 }
                 .onOpenURL { url in
                     if url.host == "reflect" { appModel.route = .reflection }
+                    if url.host == "demo" { appModel.route = .demoStory }
                 }
         }
         .modelContainer(for: IntentionalSession.self)

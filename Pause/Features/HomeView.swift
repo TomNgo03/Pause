@@ -12,7 +12,6 @@ struct HomeView: View {
             PauseBackground()
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
-                    if model.care.isPresentationMode { demoBanner }
                     header
                     thought
                     if let next = due.first { nextCheck(next) } else { allDone }
@@ -27,20 +26,12 @@ struct HomeView: View {
                             Text("Your information stays on this device. Pause does not diagnose, judge, or share health data.").font(.footnote).foregroundStyle(PauseTheme.muted)
                         }
                     }
+                    Button { model.route = .demoStory } label: { Label("Watch Pause in action", systemImage: "play.fill") }.buttonStyle(SoftButtonStyle())
                 }.padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 34)
             }
         }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(item: $selectedRoutine) { routine in ChoiceSheet(routine: routine) }
-    }
-
-    private var demoBanner: some View {
-        HStack(spacing: 9) {
-            Image(systemName: "play.rectangle.fill")
-            Text("PRESENTATION DATA").font(.caption.bold()).tracking(1.2)
-            Spacer()
-            Text("Local & labeled").font(.caption)
-        }.foregroundStyle(PauseTheme.forest).padding(13).background(PauseTheme.sage, in: Capsule())
     }
 
     private var header: some View {

@@ -13,7 +13,7 @@ struct CareInsightsView: View {
         ZStack { PauseBackground(); ScrollView(showsIndicators: false) {
             LazyVStack(alignment: .leading, spacing: 22) {
                 VStack(alignment: .leading, spacing: 5) {
-                    HStack { Text("INSIGHTS").font(.caption.bold()).tracking(1.5).foregroundStyle(PauseTheme.orange); Spacer(); if model.care.isPresentationMode { Text("DEMO DATA").font(.caption2.bold()).padding(.horizontal, 10).padding(.vertical, 6).background(PauseTheme.sage, in: Capsule()) } }
+                    Text("INSIGHTS").font(.caption.bold()).tracking(1.5).foregroundStyle(PauseTheme.orange)
                     Text("Understand the pause,\nnot just the tap.").font(.system(size: 36, weight: .bold, design: .serif))
                     Text("Transparent patterns from information stored only on this device.").font(.subheadline).foregroundStyle(PauseTheme.muted)
                 }

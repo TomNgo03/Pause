@@ -9,15 +9,15 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("Record a demo") {
+            Section("Demo studio") {
                 if model.care.isPresentationMode {
-                    Label("Presentation data is active", systemImage: "play.rectangle.fill").foregroundStyle(PauseTheme.orange)
-                    Button("Reload complete presentation story") { model.care.loadPresentationDemo() }
+                    Button("Refresh illustrative journey") { model.care.loadPresentationDemo() }
                     Button("Restore personal starter data", role: .destructive) { model.care.reset() }
                 } else {
-                    Button("Load presentation story") { model.care.loadPresentationDemo() }
+                    Button("Load illustrative journey") { model.care.loadPresentationDemo() }
                 }
-                Text("Loads clearly labeled local examples showing routine checks, changing confidence, and independent guide attempts. No real users or outcomes are implied.").font(.footnote).foregroundStyle(PauseTheme.muted)
+                Button("Play self-running product story") { model.route = .demoStory }
+                Text("Illustrative information stays local and never represents real users or clinical outcomes.").font(.footnote).foregroundStyle(PauseTheme.muted)
             }
             Section("Reminders") {
                 Button("Enable gentle notifications") { Task { _ = await model.notifications.requestAuthorization() } }
