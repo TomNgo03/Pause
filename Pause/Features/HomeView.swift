@@ -12,6 +12,7 @@ struct HomeView: View {
             PauseBackground()
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
+                    if model.care.isPresentationMode { demoBanner }
                     header
                     thought
                     if let next = due.first { nextCheck(next) } else { allDone }
@@ -31,6 +32,15 @@ struct HomeView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(item: $selectedRoutine) { routine in ChoiceSheet(routine: routine) }
+    }
+
+    private var demoBanner: some View {
+        HStack(spacing: 9) {
+            Image(systemName: "play.rectangle.fill")
+            Text("PRESENTATION DATA").font(.caption.bold()).tracking(1.2)
+            Spacer()
+            Text("Local & labeled").font(.caption)
+        }.foregroundStyle(PauseTheme.forest).padding(13).background(PauseTheme.sage, in: Capsule())
     }
 
     private var header: some View {
@@ -89,17 +99,32 @@ private struct ChoiceSheet: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.dismiss) private var dismiss
     let routine: CareRoutine
+    @State private var completed = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
             Capsule().fill(PauseTheme.ink.opacity(0.15)).frame(width: 40, height: 5).frame(maxWidth: .infinity)
-            Text("A pause is a choice.").font(.system(size: 32, weight: .bold, design: .serif))
-            Text(routine.title).font(.title3.weight(.semibold))
-            Text("Choose what fits this moment. ‘Later’ is not failure—it is a plan to return.").foregroundStyle(PauseTheme.muted)
-            Button { model.care.complete(routine); dismiss() } label: { Label("I checked", systemImage: "checkmark.circle.fill") }.buttonStyle(PrimaryButtonStyle())
-            Button { Task { await model.care.postpone(routine); dismiss() } } label: { Label("Remind me in 10 minutes", systemImage: "clock.arrow.circlepath") }.buttonStyle(SoftButtonStyle())
-            Button("Not needed today") { model.care.complete(routine); dismiss() }.foregroundStyle(PauseTheme.muted).frame(maxWidth: .infinity)
+            if completed {
+                Text("One question—not a score.").font(.system(size: 32, weight: .bold, design: .serif))
+                Text("Did this check help you feel prepared?").font(.title3.weight(.semibold))
+                Text("A completed reminder only records a tap. This answer helps Pause understand whether the design supported you.").foregroundStyle(PauseTheme.muted)
+                ForEach(RoutineResponse.Feeling.allCases, id: \.self) { feeling in
+                    if feeling == .morePrepared {
+                        Button(feeling.rawValue) { model.care.recordFeeling(feeling, for: routine); dismiss() }.buttonStyle(PrimaryButtonStyle())
+                    } else {
+                        Button(feeling.rawValue) { model.care.recordFeeling(feeling, for: routine); dismiss() }.buttonStyle(SoftButtonStyle())
+                    }
+                }
+                Button("Skip reflection") { dismiss() }.foregroundStyle(PauseTheme.muted).frame(maxWidth: .infinity)
+            } else {
+                Text("A pause is a choice.").font(.system(size: 32, weight: .bold, design: .serif))
+                Text(routine.title).font(.title3.weight(.semibold))
+                Text("Choose what fits this moment. ‘Later’ is not failure—it is a plan to return.").foregroundStyle(PauseTheme.muted)
+                Button { model.care.complete(routine); withAnimation { completed = true } } label: { Label("I checked", systemImage: "checkmark.circle.fill") }.buttonStyle(PrimaryButtonStyle())
+                Button { Task { await model.care.postpone(routine); dismiss() } } label: { Label("Remind me in 10 minutes", systemImage: "clock.arrow.circlepath") }.buttonStyle(SoftButtonStyle())
+                Button("Not needed today") { model.care.complete(routine); dismiss() }.foregroundStyle(PauseTheme.muted).frame(maxWidth: .infinity)
+            }
             Spacer()
-        }.padding(24).presentationDetents([.medium]).background(PauseTheme.cream)
+        }.padding(24).presentationDetents([completed ? .large : .medium]).background(PauseTheme.cream)
     }
 }

@@ -8,7 +8,28 @@ struct CareRoutine: Identifiable, Codable, Equatable {
     var reminderMinute: Int
     var isEnabled: Bool = true
     var completedDates: [Date] = []
+    var responses: [RoutineResponse] = []
     var postponedUntil: Date?
+
+    enum CodingKeys: String, CodingKey { case id, title, detail, reminderHour, reminderMinute, isEnabled, completedDates, responses, postponedUntil }
+
+    init(id: UUID = UUID(), title: String, detail: String, reminderHour: Int, reminderMinute: Int, isEnabled: Bool = true, completedDates: [Date] = [], responses: [RoutineResponse] = [], postponedUntil: Date? = nil) {
+        self.id = id; self.title = title; self.detail = detail; self.reminderHour = reminderHour; self.reminderMinute = reminderMinute
+        self.isEnabled = isEnabled; self.completedDates = completedDates; self.responses = responses; self.postponedUntil = postponedUntil
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        title = try values.decode(String.self, forKey: .title)
+        detail = try values.decode(String.self, forKey: .detail)
+        reminderHour = try values.decode(Int.self, forKey: .reminderHour)
+        reminderMinute = try values.decode(Int.self, forKey: .reminderMinute)
+        isEnabled = try values.decodeIfPresent(Bool.self, forKey: .isEnabled) ?? true
+        completedDates = try values.decodeIfPresent([Date].self, forKey: .completedDates) ?? []
+        responses = try values.decodeIfPresent([RoutineResponse].self, forKey: .responses) ?? []
+        postponedUntil = try values.decodeIfPresent(Date.self, forKey: .postponedUntil)
+    }
 
     var reminderDate: Date {
         Calendar.current.date(bySettingHour: reminderHour, minute: reminderMinute, second: 0, of: .now) ?? .now
@@ -17,6 +38,18 @@ struct CareRoutine: Identifiable, Codable, Equatable {
     func isCompleted(on date: Date = .now) -> Bool {
         completedDates.contains { Calendar.current.isDate($0, inSameDayAs: date) }
     }
+}
+
+struct RoutineResponse: Identifiable, Codable, Equatable {
+    enum Feeling: String, Codable, CaseIterable {
+        case morePrepared = "More prepared"
+        case aboutTheSame = "About the same"
+        case stillUnsure = "Still unsure"
+    }
+
+    var id: UUID = UUID()
+    var date: Date = .now
+    var feeling: Feeling
 }
 
 struct PersonalGuide: Identifiable, Codable, Equatable {
@@ -30,6 +63,20 @@ struct PersonalGuide: Identifiable, Codable, Equatable {
 struct PauseLocalState: Codable {
     var routines: [CareRoutine]
     var guides: [PersonalGuide]
+    var isPresentationMode: Bool = false
+
+    enum CodingKeys: String, CodingKey { case routines, guides, isPresentationMode }
+
+    init(routines: [CareRoutine], guides: [PersonalGuide], isPresentationMode: Bool = false) {
+        self.routines = routines; self.guides = guides; self.isPresentationMode = isPresentationMode
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        routines = try values.decode([CareRoutine].self, forKey: .routines)
+        guides = try values.decode([PersonalGuide].self, forKey: .guides)
+        isPresentationMode = try values.decodeIfPresent(Bool.self, forKey: .isPresentationMode) ?? false
+    }
 
     static let starter = PauseLocalState(
         routines: [

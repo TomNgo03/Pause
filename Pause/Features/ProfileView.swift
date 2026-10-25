@@ -9,6 +9,8 @@ struct ProfileView: View {
     private var independentTries: Int {
         model.care.guides.reduce(0) { $0 + $1.practiceCount }
     }
+    private var responses: [RoutineResponse] { model.care.routines.flatMap(\.responses) }
+    private var preparedCount: Int { responses.filter { $0.feeling == .morePrepared }.count }
 
     var body: some View {
         ZStack { PauseBackground(); ScrollView(showsIndicators: false) {
@@ -30,6 +32,18 @@ struct ProfileView: View {
                     metric("\(completedChecks)", "routine checks", "checkmark.circle.fill")
                     metric("\(independentTries)", "independent tries", "hand.raised.fill")
                 }
+                EditorialCard(color: PauseTheme.forest) {
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("THE DIFFERENCE THAT MATTERS").font(.caption.bold()).tracking(1.3).foregroundStyle(PauseTheme.sage)
+                        if responses.isEmpty {
+                            Text("Completion is not the same as capability.").font(.title2.bold()).foregroundStyle(.white)
+                            Text("After a routine check, Pause asks whether the prompt actually helped. That reflection—not the tap—is the meaningful signal.").foregroundStyle(.white.opacity(0.72))
+                        } else {
+                            Text("\(preparedCount) of \(responses.count) checks felt helpful.").font(.title2.bold()).foregroundStyle(.white)
+                            Text(insight).foregroundStyle(.white.opacity(0.72))
+                        }
+                    }
+                }
                 EditorialCard(color: PauseTheme.sage) {
                     VStack(alignment: .leading, spacing: 12) {
                         Label("What Pause measures", systemImage: "heart.text.square.fill").font(.headline)
@@ -46,6 +60,12 @@ struct ProfileView: View {
                 }
             }.padding(20).padding(.bottom, 30)
         }}.foregroundStyle(PauseTheme.ink).toolbar(.hidden, for: .navigationBar)
+    }
+
+    private var insight: String {
+        guard responses.count >= 2 else { return "Pause is beginning to learn whether prompts create confidence, not merely compliance." }
+        let recent = responses.suffix(2).filter { $0.feeling == .morePrepared }.count
+        return recent == 2 ? "Your two most recent reflections say ‘More prepared’—a stronger outcome than simply dismissing a notification." : "The pattern is mixed, so Pause avoids claiming the reminder solved the problem."
     }
 
     private func metric(_ value: String, _ label: String, _ symbol: String) -> some View {

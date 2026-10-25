@@ -9,6 +9,15 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            Section("Record a demo") {
+                if model.care.isPresentationMode {
+                    Label("Presentation data is active", systemImage: "play.rectangle.fill").foregroundStyle(PauseTheme.orange)
+                    Button("Restore personal starter data", role: .destructive) { model.care.reset() }
+                } else {
+                    Button("Load presentation story") { model.care.loadPresentationDemo() }
+                }
+                Text("Loads clearly labeled local examples showing routine checks, changing confidence, and independent guide attempts. No real users or outcomes are implied.").font(.footnote).foregroundStyle(PauseTheme.muted)
+            }
             Section("Reminders") {
                 Button("Enable gentle notifications") { Task { _ = await model.notifications.requestAuthorization() } }
                 Text("Notifications use supportive language and always leave the decision with you.").font(.footnote).foregroundStyle(PauseTheme.muted)
