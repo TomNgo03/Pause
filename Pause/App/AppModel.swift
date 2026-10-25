@@ -4,7 +4,7 @@ import Combine
 
 @MainActor
 final class AppModel: ObservableObject {
-    enum Route: Equatable { case home, routines, guides, appSelection, plan, aiPlanner, profile, active, reflection, dashboard, settings }
+    enum Route: Equatable { case home, routines, guides, insights, appSelection, plan, aiPlanner, profile, active, reflection, dashboard, settings }
 
     @Published var route: Route = .home
     @Published private(set) var activeSession: SessionDraft?

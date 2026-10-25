@@ -42,6 +42,19 @@ private struct RoutineDetailView: View {
                 HStack { Text("ROUTINE").font(.caption.bold()).tracking(1.4).foregroundStyle(PauseTheme.orange); Spacer(); Button { dismiss() } label: { Image(systemName: "xmark").frame(width: 38, height: 38).background(PauseTheme.sage, in: Circle()) } }
                 Text(routine.title).font(.system(size: 34, weight: .bold, design: .serif))
                 Text(routine.detail).foregroundStyle(PauseTheme.muted)
+                HStack(spacing: 8) {
+                    Label(routine.reminderDate.formatted(date: .omitted, time: .shortened), systemImage: "clock")
+                    Text("·")
+                    Text(repeatSummary)
+                }.font(.caption.bold()).foregroundStyle(PauseTheme.forest)
+                if !routine.checklistItems.isEmpty {
+                    EditorialCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("PREPARATION CHECKLIST").font(.caption.bold()).tracking(1.2).foregroundStyle(PauseTheme.orange)
+                            ForEach(Array(routine.checklistItems.enumerated()), id: \.offset) { _, item in Label(item, systemImage: "circle").font(.subheadline) }
+                        }
+                    }
+                }
                 EditorialCard(color: PauseTheme.forest) {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("THE PROMPT").font(.caption.bold()).tracking(1.3).foregroundStyle(PauseTheme.sage)
@@ -71,6 +84,10 @@ private struct RoutineDetailView: View {
             }.padding(22)
         }.background(PauseTheme.cream).presentationDetents([.large])
     }
+
+    private var repeatSummary: String {
+        routine.repeatWeekdays.count == 7 ? "Every day" : "\(routine.repeatWeekdays.count) days each week"
+    }
 }
 
 private struct AddRoutineView: View {
@@ -79,6 +96,9 @@ private struct AddRoutineView: View {
     @State private var title = ""
     @State private var detail = ""
     @State private var time = Date.now
+    @State private var weekdays: Set<Int> = Set(1...7)
+    @State private var checklistText = ""
+    private let symbols = Calendar.current.veryShortWeekdaySymbols
 
     var body: some View {
         NavigationStack {
@@ -88,13 +108,25 @@ private struct AddRoutineView: View {
                     TextField("A kind note to yourself", text: $detail, axis: .vertical)
                 }
                 Section("When") { DatePicker("Reminder", selection: $time, displayedComponents: .hourAndMinute) }
+                Section("Repeat") {
+                    HStack { ForEach(1...7, id: \.self) { day in Button(symbols[day - 1]) { if weekdays.contains(day) { weekdays.remove(day) } else { weekdays.insert(day) } }.buttonStyle(DayButtonStyle(selected: weekdays.contains(day))) } }
+                }
+                Section("Optional checklist") {
+                    TextField("One item per line", text: $checklistText, axis: .vertical).lineLimit(3...7)
+                    Text("Useful for routines such as keys, phone, and inhaler.").font(.footnote).foregroundStyle(PauseTheme.muted)
+                }
             }
             .navigationTitle("New routine")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Add") { Task { await model.care.addRoutine(title: title, detail: detail, date: time); dismiss() } }.disabled(title.trimmingCharacters(in: .whitespaces).isEmpty) }
+                ToolbarItem(placement: .confirmationAction) { Button("Add") { Task { await model.care.addRoutine(title: title, detail: detail, date: time, weekdays: weekdays.sorted(), checklistItems: checklistText.components(separatedBy: .newlines).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }); dismiss() } }.disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || weekdays.isEmpty) }
             }
         }
     }
+}
+
+private struct DayButtonStyle: ButtonStyle {
+    let selected: Bool
+    func makeBody(configuration: Configuration) -> some View { configuration.label.font(.caption.bold()).foregroundStyle(selected ? .white : PauseTheme.muted).frame(width: 34, height: 34).background(selected ? PauseTheme.forest : PauseTheme.ink.opacity(0.06), in: Circle()).opacity(configuration.isPressed ? 0.7 : 1) }
 }
 

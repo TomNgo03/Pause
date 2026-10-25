@@ -21,6 +21,7 @@ struct RootView: View {
                     case .home: HomeView()
                     case .routines: RoutinesView()
                     case .guides: GuidesView()
+                    case .insights: CareInsightsView()
                     case .appSelection: ProtectedAppsView()
                     case .plan: SessionPlannerView()
                     case .aiPlanner: AIPlannerView()
@@ -37,7 +38,7 @@ struct RootView: View {
     }
 
     private var showsTabBar: Bool {
-        [.home, .routines, .guides, .profile].contains(model.route)
+        [.home, .routines, .guides, .insights, .profile].contains(model.route)
     }
 }
 
@@ -47,6 +48,7 @@ private struct PauseTabBar: View {
         (.home, "Today", "sun.max.fill"),
         (.routines, "Routines", "checklist"),
         (.guides, "Guides", "book.pages.fill"),
+        (.insights, "Insights", "chart.xyaxis.line"),
         (.profile, "You", "person.crop.circle.fill")
     ]
 

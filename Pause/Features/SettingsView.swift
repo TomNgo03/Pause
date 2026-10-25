@@ -12,6 +12,7 @@ struct SettingsView: View {
             Section("Record a demo") {
                 if model.care.isPresentationMode {
                     Label("Presentation data is active", systemImage: "play.rectangle.fill").foregroundStyle(PauseTheme.orange)
+                    Button("Reload complete presentation story") { model.care.loadPresentationDemo() }
                     Button("Restore personal starter data", role: .destructive) { model.care.reset() }
                 } else {
                     Button("Load presentation story") { model.care.loadPresentationDemo() }

@@ -121,8 +121,10 @@ private struct ChoiceSheet: View {
                 Text(routine.title).font(.title3.weight(.semibold))
                 Text("Choose what fits this moment. ‘Later’ is not failure—it is a plan to return.").foregroundStyle(PauseTheme.muted)
                 Button { model.care.complete(routine); withAnimation { completed = true } } label: { Label("I checked", systemImage: "checkmark.circle.fill") }.buttonStyle(PrimaryButtonStyle())
-                Button { Task { await model.care.postpone(routine); dismiss() } } label: { Label("Remind me in 10 minutes", systemImage: "clock.arrow.circlepath") }.buttonStyle(SoftButtonStyle())
-                Button("Not needed today") { model.care.complete(routine); dismiss() }.foregroundStyle(PauseTheme.muted).frame(maxWidth: .infinity)
+                Menu {
+                    ForEach([5, 10, 30], id: \.self) { minutes in Button("In \(minutes) minutes") { Task { await model.care.postpone(routine, minutes: minutes); dismiss() } } }
+                } label: { Label("Choose a better moment", systemImage: "clock.arrow.circlepath").frame(maxWidth: .infinity) }.buttonStyle(SoftButtonStyle())
+                Button("Not needed today") { model.care.skip(routine); dismiss() }.foregroundStyle(PauseTheme.muted).frame(maxWidth: .infinity)
             }
             Spacer()
         }.padding(24).presentationDetents([completed ? .large : .medium]).background(PauseTheme.cream)

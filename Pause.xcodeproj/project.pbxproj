@@ -21,6 +21,7 @@
 		7C3A523510C8785027EFCDCD /* GuidesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B353B96CB7AFDCEBCC42C9 /* GuidesView.swift */; };
 		889CDFB369E0A49A36F930D4 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DE6340ADE5CE13C69B8027A /* HomeView.swift */; };
 		8DA94BE86BF53B69D540F9A8 /* PauseTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C44C94BB01C8D5D2A1E4878 /* PauseTheme.swift */; };
+		91277F3E0AF5C25EAFF00B0E /* CareInsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D560B6BC74EF85BFB493BCCD /* CareInsightsView.swift */; };
 		91814759516561E866F71058 /* CareStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 746E9F070895118E3CF00D02 /* CareStore.swift */; };
 		961D776E59B5904F669DA18A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 149F431C98B0CAFBE5279AE3 /* SettingsView.swift */; };
 		97C97ED71A77DCEEB61D08FA /* SessionPlannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 781C6AE08D63F7E07A09B119 /* SessionPlannerView.swift */; };
@@ -83,6 +84,7 @@
 		CBF1BBF77850EC2F8E923DC6 /* AuthFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthFlowView.swift; sourceTree = "<group>"; };
 		D0B353B96CB7AFDCEBCC42C9 /* GuidesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuidesView.swift; sourceTree = "<group>"; };
 		D4A3FA7570123C34C1B4A1C8 /* AIPlannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPlannerView.swift; sourceTree = "<group>"; };
+		D560B6BC74EF85BFB493BCCD /* CareInsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CareInsightsView.swift; sourceTree = "<group>"; };
 		E3FEDEBD5224150E7531DBAA /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		E63D54E608D1112F813E4008 /* SocialModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialModels.swift; sourceTree = "<group>"; };
 		EFB5BF17791704B0B5E251E5 /* CareRoutine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CareRoutine.swift; sourceTree = "<group>"; };
@@ -108,6 +110,7 @@
 				0424365B8DA9E4AFA71CECD8 /* ActiveSessionView.swift */,
 				D4A3FA7570123C34C1B4A1C8 /* AIPlannerView.swift */,
 				CBF1BBF77850EC2F8E923DC6 /* AuthFlowView.swift */,
+				D560B6BC74EF85BFB493BCCD /* CareInsightsView.swift */,
 				B15F572E6634CC1E08C0F728 /* DashboardView.swift */,
 				D0B353B96CB7AFDCEBCC42C9 /* GuidesView.swift */,
 				9DE6340ADE5CE13C69B8027A /* HomeView.swift */,
@@ -310,6 +313,7 @@
 				62158FF96D238EB01C06511D /* AppModel.swift in Sources */,
 				1CD4972E68E413CD0D2AB277 /* AuthFlowView.swift in Sources */,
 				B2113232DCE57620FDD524A5 /* AuthService.swift in Sources */,
+				91277F3E0AF5C25EAFF00B0E /* CareInsightsView.swift in Sources */,
 				D33D21A2FB6F4E91AF86B5BC /* CareRoutine.swift in Sources */,
 				91814759516561E866F71058 /* CareStore.swift in Sources */,
 				ACDF71A616E04E81C3A9D377 /* DashboardView.swift in Sources */,
