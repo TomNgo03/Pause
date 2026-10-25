@@ -4,7 +4,7 @@ import Combine
 
 @MainActor
 final class AppModel: ObservableObject {
-    enum Route: Equatable { case home, appSelection, plan, aiPlanner, profile, active, reflection, dashboard, settings }
+    enum Route: Equatable { case home, routines, guides, appSelection, plan, aiPlanner, profile, active, reflection, dashboard, settings }
 
     @Published var route: Route = .home
     @Published private(set) var activeSession: SessionDraft?
@@ -15,15 +15,18 @@ final class AppModel: ObservableObject {
     let preferences = PreferencesStore()
     let screenTime: ScreenTimeControlling
     let notifications = NotificationService()
+    let care = CareStore()
     let social = SocialStore()
     let planner = AIPlanningService()
     let auth = AuthService()
     private var socialObservation: AnyCancellable?
+    private var careObservation: AnyCancellable?
 
     init(screenTime: ScreenTimeControlling = ScreenTimeServiceFactory.make()) {
         self.screenTime = screenTime
         self.activeSession = SessionRecoveryStore.load()
         socialObservation = social.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
+        careObservation = care.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
     }
 
     func start(_ draft: SessionDraft) async {

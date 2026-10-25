@@ -19,6 +19,8 @@ struct RootView: View {
         NavigationStack {
                     switch model.route {
                     case .home: HomeView()
+                    case .routines: RoutinesView()
+                    case .guides: GuidesView()
                     case .appSelection: ProtectedAppsView()
                     case .plan: SessionPlannerView()
                     case .aiPlanner: AIPlannerView()
@@ -35,7 +37,7 @@ struct RootView: View {
     }
 
     private var showsTabBar: Bool {
-        [.home, .aiPlanner, .profile].contains(model.route)
+        [.home, .routines, .guides, .profile].contains(model.route)
     }
 }
 
@@ -43,7 +45,8 @@ private struct PauseTabBar: View {
     @Binding var selection: AppModel.Route
     private let tabs: [(AppModel.Route, String, String)] = [
         (.home, "Today", "sun.max.fill"),
-        (.aiPlanner, "Coach", "sparkles"),
+        (.routines, "Routines", "checklist"),
+        (.guides, "Guides", "book.pages.fill"),
         (.profile, "You", "person.crop.circle.fill")
     ]
 

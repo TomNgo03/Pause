@@ -1,5 +1,11 @@
 import Foundation
 
+// Retained for the legacy focus-session demo screens that remain outside the
+// new care-routine navigation.
+enum PlanetJourney {
+    static let milestones = [("Launch", 15), ("Moon", 25), ("Mars", 60), ("Saturn", 150), ("Neptune", 300), ("Beyond", 600)]
+}
+
 struct SpaceAchievement: Identifiable, Equatable {
     let id: String
     let title: String

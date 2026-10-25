@@ -4,11 +4,11 @@ struct OnboardingView: View {
     @EnvironmentObject private var model: AppModel
     @State private var page = 0
     @State private var name = ""
-    @State private var goal = "Study"
+    @State private var goal = "Health routine"
     @State private var minutes = 25
-    @State private var attention = "Clear"
-    private let goals = ["Study", "Reading", "Creative work", "Wellbeing", "Other"]
-    private let attentionOptions = ["Clear", "Restless", "Tired", "Overwhelmed"]
+    @State private var attention = "Remember a routine"
+    private let goals = ["Health routine", "Daily preparation", "Independent living", "Other"]
+    private let attentionOptions = ["Remember a routine", "Feel prepared", "Learn a task independently"]
 
     var body: some View {
         ZStack {
@@ -33,8 +33,8 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 28) {
             Spacer()
             ZStack { Circle().fill(PauseTheme.sage).frame(width: 150, height: 150); Image(systemName: "pause.fill").font(.system(size: 54, weight: .bold)).foregroundStyle(PauseTheme.forest) }
-            Text("Use your attention\nwith intention.").font(.system(size: 43, weight: .bold, design: .serif)).tracking(-1.2)
-            Text("Pause helps you choose one meaningful next step, focus without pressure, and learn from what happened.").font(.title3).foregroundStyle(PauseTheme.muted).lineSpacing(5)
+            Text("Make room\nfor your choice.").font(.system(size: 43, weight: .bold, design: .serif)).tracking(-1.2)
+            Text("Pause offers gentle reminders and personal guides—so technology can support you without taking control.").font(.title3).foregroundStyle(PauseTheme.muted).lineSpacing(5)
             Spacer()
         }.padding(.horizontal, 28)
     }
@@ -43,23 +43,17 @@ struct OnboardingView: View {
         ScrollView { VStack(alignment: .leading, spacing: 24) {
             Text("Make it yours.").font(.system(size: 40, weight: .bold, design: .serif))
             TextField("First name or nickname", text: $name).textFieldStyle(.plain).padding(18).background(PauseTheme.paper, in: RoundedRectangle(cornerRadius: 18))
-            choiceSection("What matters most?", values: goals, selection: $goal)
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Your usual focus time").font(.headline)
-                HStack { ForEach([15, 25, 40, 60], id: \.self) { value in
-                    Button("\(value)m") { minutes = value }.buttonStyle(ChoiceButtonStyle(selected: minutes == value))
-                } }
-            }
+            choiceSection("Where could Pause help?", values: goals, selection: $goal)
         }.padding(28) }
     }
 
     private var checkIn: some View {
         VStack(alignment: .leading, spacing: 24) {
-            Text("Where are you\nstarting today?").font(.system(size: 40, weight: .bold, design: .serif))
-            Text("There is no wrong answer. Pause adapts the first suggestion to you.").foregroundStyle(PauseTheme.muted)
-            choiceSection("My attention feels…", values: attentionOptions, selection: $attention)
+            Text("What would create\nmore room today?").font(.system(size: 40, weight: .bold, design: .serif))
+            Text("There is no score and no wrong answer. You stay in control of every prompt.").foregroundStyle(PauseTheme.muted)
+            choiceSection("I want to…", values: attentionOptions, selection: $attention)
             Spacer()
-            EditorialCard(color: PauseTheme.sage) { Label("Your data stays on this device unless you explicitly request an online Coach enhancement.", systemImage: "lock.fill").font(.footnote).foregroundStyle(PauseTheme.forest) }
+            EditorialCard(color: PauseTheme.sage) { Label("Your routines stay on this device. Pause is a memory aid, not medical advice.", systemImage: "lock.fill").font(.footnote).foregroundStyle(PauseTheme.forest) }
         }.padding(28)
     }
 
