@@ -69,6 +69,7 @@ private struct PauseTabBar: View {
                                 in: RoundedRectangle(cornerRadius: 15, style: .continuous))
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("tab.\(label.lowercased())")
                 .accessibilityAddTraits(selection == route ? .isSelected : [])
             }
         }

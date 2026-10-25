@@ -60,7 +60,7 @@ struct DemoStoryView: View {
                 HStack(spacing: 8) { Image(systemName: "pause.fill"); Text("PAUSE").font(.caption.bold()).tracking(1.8) }.foregroundStyle(PauseTheme.forest)
                 Spacer()
                 Text("Illustrative walkthrough").font(.caption).foregroundStyle(PauseTheme.muted)
-                Button { model.route = .home } label: { Image(systemName: "xmark").frame(width: 40, height: 40).background(PauseTheme.sage, in: Circle()) }.accessibilityLabel("Close product story")
+                Button { model.route = .home } label: { Image(systemName: "xmark").frame(width: 40, height: 40).background(PauseTheme.sage, in: Circle()) }.accessibilityLabel("Close product story").accessibilityIdentifier("demo.close")
             }
             GeometryReader { proxy in ZStack(alignment: .leading) { Capsule().fill(PauseTheme.ink.opacity(0.08)); Capsule().fill(PauseTheme.orange).frame(width: proxy.size.width * CGFloat(scene + 1) / CGFloat(sceneCount)) } }.frame(height: 5)
         }.padding(.horizontal, 22).padding(.top, 12)
@@ -306,7 +306,16 @@ struct DemoStoryView: View {
     private func timelinePoint(_ time: String, _ label: String, _ filled: Bool) -> some View { VStack(spacing: 8) { Circle().fill(filled ? PauseTheme.orange : PauseTheme.paper).frame(width: 28, height: 28).overlay(Image(systemName: "checkmark").font(.caption.bold()).foregroundStyle(.white)); Text(time).font(.caption.bold()); Text(label).font(.caption2).foregroundStyle(PauseTheme.muted).multilineTextAlignment(.center) }.frame(width: 100) }
     private var timelineLine: some View { Rectangle().fill(PauseTheme.orange.opacity(0.35)).frame(height: 3).frame(maxWidth: .infinity).offset(y: -24) }
     private func modeCard(_ number: String, _ title: String, _ detail: String, _ symbol: String) -> some View { EditorialCard(padding: 14) { VStack(alignment: .leading, spacing: 10) { Text(number).font(.caption.bold()).foregroundStyle(PauseTheme.orange); Image(systemName: symbol).font(.title2); Text(title).font(.headline); Text(detail).font(.caption).foregroundStyle(PauseTheme.muted).lineLimit(3) } }.frame(maxWidth: .infinity) }
-    private func demoMetric(_ value: String, _ label: String) -> some View { EditorialCard(padding: 15) { Text(value).font(.title.bold()).monospacedDigit(); Text(label).font(.caption).foregroundStyle(PauseTheme.muted) }.frame(maxWidth: .infinity) }
+    private func demoMetric(_ value: String, _ label: String) -> some View {
+        EditorialCard(padding: 14) {
+            VStack(alignment: .leading, spacing: 5) {
+                Text(value).font(.title.bold()).monospacedDigit()
+                Text(label).font(.caption).foregroundStyle(PauseTheme.muted).lineLimit(1).minimumScaleFactor(0.62)
+            }
+            .frame(maxWidth: .infinity, minHeight: 58, alignment: .leading)
+        }
+        .frame(maxWidth: .infinity)
+    }
     private var tapPulse: some View { ZStack { Circle().fill(PauseTheme.orange.opacity(0.18)).frame(width: 54, height: 54); Circle().fill(PauseTheme.orange).frame(width: 18, height: 18).overlay(Circle().stroke(.white, lineWidth: 3)) }.offset(x: 10, y: 16).accessibilityHidden(true) }
     private func featureChip(_ title: String, _ symbol: String) -> some View { Label(title, systemImage: symbol).font(.caption.bold()).padding(.horizontal, 12).padding(.vertical, 9).background(PauseTheme.sage, in: Capsule()) }
     private func field(_ label: String, _ value: String, _ symbol: String) -> some View { VStack(alignment: .leading, spacing: 5) { Text(label.uppercased()).font(.caption2.bold()).foregroundStyle(PauseTheme.muted); Label(value, systemImage: symbol).font(.subheadline.weight(.semibold)).padding(12).frame(maxWidth: .infinity, alignment: .leading).background(PauseTheme.cream, in: RoundedRectangle(cornerRadius: 12)) } }

@@ -13,7 +13,7 @@ struct GuidesView: View {
                 ForEach(model.care.guides) { guide in
                     Button { selected = guide } label: {
                         EditorialCard { HStack { VStack(alignment: .leading, spacing: 6) { Text(guide.title).font(.headline); Text(guide.purpose).font(.caption).foregroundStyle(PauseTheme.muted); Text(level(for: guide)).font(.caption.bold()).foregroundStyle(PauseTheme.forest) }; Spacer(); Image(systemName: "arrow.up.right").foregroundStyle(PauseTheme.orange) } }
-                    }.buttonStyle(.plain)
+                    }.buttonStyle(.plain).accessibilityIdentifier("guide.card.\(guide.id.uuidString)")
                 }
             }.padding(20).padding(.bottom, 30)
         }}.toolbar(.hidden, for: .navigationBar).sheet(item: $selected) { GuidePracticeView(guide: $0) }.sheet(isPresented: $showingAdd) { AddGuideView() }
@@ -35,14 +35,14 @@ private struct GuidePracticeView: View {
             Text(guide.title).font(.system(size: 32, weight: .bold, design: .serif))
             if guide.practiceCount >= 4 && !showHint {
                 Text("Try the task in your own way. The guide is here only if you decide you need it.").font(.title3).foregroundStyle(PauseTheme.muted).frame(maxHeight: .infinity, alignment: .center)
-                Button("I did it without help") { model.care.practiced(guide, independently: true); dismiss() }.buttonStyle(PrimaryButtonStyle())
-                Button("Show me one hint") { showHint = true }.buttonStyle(SoftButtonStyle())
+                Button("I did it without help") { model.care.practiced(guide, independently: true); dismiss() }.buttonStyle(PrimaryButtonStyle()).accessibilityIdentifier("guide.independent")
+                Button("Show me one hint") { showHint = true }.buttonStyle(SoftButtonStyle()).accessibilityIdentifier("guide.hint")
             } else if guide.practiceCount >= 2 && !showHint {
                 Text("What do you think the first step is?").font(.title2.weight(.semibold)).frame(maxHeight: .infinity, alignment: .center)
-                Button("Reveal one hint") { showHint = true }.buttonStyle(SoftButtonStyle())
+                Button("Reveal one hint") { showHint = true }.buttonStyle(SoftButtonStyle()).accessibilityIdentifier("guide.reveal")
             } else if step < guide.steps.count {
                 Text(guide.steps[step]).font(.title2.weight(.semibold)).frame(maxHeight: .infinity, alignment: .center)
-                Button(step == guide.steps.count - 1 ? "I did it" : "Next step") { if step < guide.steps.count - 1 { withAnimation { step += 1 } } else { model.care.practiced(guide, independently: false); dismiss() } }.buttonStyle(PrimaryButtonStyle())
+                Button(step == guide.steps.count - 1 ? "I did it" : "Next step") { if step < guide.steps.count - 1 { withAnimation { step += 1 } } else { model.care.practiced(guide, independently: false); dismiss() } }.buttonStyle(PrimaryButtonStyle()).accessibilityIdentifier("guide.next")
             }
             Button("Try once without the guide") { model.care.practiced(guide, independently: true); dismiss() }.buttonStyle(SoftButtonStyle())
         }.padding(26).presentationDetents([.large]).background(PauseTheme.cream)

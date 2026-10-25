@@ -23,7 +23,7 @@ struct CareInsightsView: View {
                 adaptiveSuggestion
                 timeline
             }.padding(20).padding(.bottom, 32)
-        }}.toolbar(.hidden, for: .navigationBar)
+        }.accessibilityIdentifier("insights.scroll")}.toolbar(.hidden, for: .navigationBar)
     }
 
     private var overview: some View {
@@ -93,7 +93,7 @@ struct CareInsightsView: View {
         }
     }
 
-    private func metric(_ value: String, _ label: String, _ symbol: String) -> some View { EditorialCard(padding: 15) { VStack(alignment: .leading, spacing: 6) { Image(systemName: symbol).foregroundStyle(PauseTheme.orange); Text(value).font(.title2.bold()).monospacedDigit(); Text(label).font(.caption2).foregroundStyle(PauseTheme.muted) } } }
+    private func metric(_ value: String, _ label: String, _ symbol: String) -> some View { EditorialCard(padding: 15) { VStack(alignment: .leading, spacing: 6) { Image(systemName: symbol).foregroundStyle(PauseTheme.orange); Text(value).font(.title2.bold()).monospacedDigit(); Text(label).font(.caption2).foregroundStyle(PauseTheme.muted).lineLimit(1).minimumScaleFactor(0.65) } }.frame(maxWidth: .infinity) }
     private func score(_ feeling: RoutineResponse.Feeling) -> Int { switch feeling { case .morePrepared: 3; case .aboutTheSame: 2; case .stillUnsure: 1 } }
     private func color(for kind: PauseActivity.Kind) -> Color { switch kind { case .completed: PauseTheme.forest; case .postponed: PauseTheme.orange; case .skipped: PauseTheme.muted; case .guided: PauseTheme.violet; case .independent: PauseTheme.sky } }
     private var averageDelay: Int { let values = activity.compactMap(\.delayMinutes); return values.isEmpty ? 0 : values.reduce(0, +) / values.count }

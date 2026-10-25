@@ -21,7 +21,7 @@ struct RoutinesView: View {
                                 Spacer(); Image(systemName: "chevron.right").foregroundStyle(PauseTheme.muted)
                             }
                         }
-                    }.buttonStyle(.plain)
+                    }.buttonStyle(.plain).accessibilityIdentifier("routine.card.\(routine.id.uuidString)")
                 }
                 EditorialCard(color: PauseTheme.sage) { Text("Pause is a memory aid, not medical advice. Always follow the care plan given by a qualified professional.").font(.footnote).foregroundStyle(PauseTheme.forest) }
             }.padding(20).padding(.bottom, 30)
@@ -39,7 +39,7 @@ private struct RoutineDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                HStack { Text("ROUTINE").font(.caption.bold()).tracking(1.4).foregroundStyle(PauseTheme.orange); Spacer(); Button { dismiss() } label: { Image(systemName: "xmark").frame(width: 38, height: 38).background(PauseTheme.sage, in: Circle()) } }
+                HStack { Text("ROUTINE").font(.caption.bold()).tracking(1.4).foregroundStyle(PauseTheme.orange); Spacer(); Button { dismiss() } label: { Image(systemName: "xmark").frame(width: 38, height: 38).background(PauseTheme.sage, in: Circle()) }.accessibilityLabel("Close routine details").accessibilityIdentifier("routine.detail.close") }
                 Text(routine.title).font(.system(size: 34, weight: .bold, design: .serif))
                 Text(routine.detail).foregroundStyle(PauseTheme.muted)
                 HStack(spacing: 8) {

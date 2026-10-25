@@ -31,3 +31,25 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: org.pauseproject.tests
+  PauseUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [PauseUITests]
+    dependencies:
+      - target: Pause
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.pauseproject.uitests
+schemes:
+  Pause:
+    build:
+      targets:
+        Pause: all
+  PauseDemo:
+    build:
+      targets:
+        Pause: all
+        PauseUITests: [test]
+    test:
+      targets:
+        - PauseUITests

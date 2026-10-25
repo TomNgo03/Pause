@@ -27,6 +27,12 @@ final class AppModel: ObservableObject {
         self.activeSession = SessionRecoveryStore.load()
         socialObservation = social.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
         careObservation = care.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
+        if ProcessInfo.processInfo.arguments.contains("-ui-demo") {
+            preferences.onboardingComplete = true
+            preferences.displayName = "Huy"
+            care.loadPresentationDemo()
+            route = .demoStory
+        }
     }
 
     func start(_ draft: SessionDraft) async {
