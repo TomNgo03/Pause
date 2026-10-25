@@ -9,3 +9,19 @@ Pause also creates personal guides that gradually fade—from clear steps, to on
 And instead of celebrating taps, Pause asks whether someone actually felt more prepared. Every insight is private, explainable, and stored on the device.
 
 I used to fear the pause between breaths. Now I want to build for the pauses in which someone decides what to do next.
+
+Now, let me show you how the working prototype turns that idea into an experience.
+
+The Today screen avoids a crowded dashboard. It presents one calm, relevant decision. Opening the reminder reveals three valid responses. The user can complete the check, choose a better moment, or say the routine is not relevant today. Nothing is labeled as failure.
+
+After a completed check, Pause asks a different question: did this interaction actually help you feel prepared? That distinction matters. Closing a notification measures compliance. Reflecting on preparedness begins to measure usefulness.
+
+The routine builder supports custom language, flexible schedules, and repeat days. A preparation checklist can move small details—keys, phone, inhaler—out of working memory, leaving more attention for everyday life.
+
+Personal guides begin with the learner’s own goal. Here, the guide explains how to attach a document one step at a time. After repeated practice, the interface removes instructions, offers a hint only when requested, and invites an independent attempt.
+
+Finally, Pause records completed, postponed, skipped, guided, and independent actions locally. Its suggestions are transparent. If several reminders are postponed by ten minutes, Pause may recommend a later time—but it never changes anything without permission.
+
+This is not a diagnostic tool, and these illustrative patterns are not medical outcomes. Pause is an experiment in humane computing: built from lived experience, improved through failure, and designed to make itself less necessary.
+
+The goal is not to make people obey technology. It is to help them act without it.
