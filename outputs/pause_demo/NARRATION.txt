@@ -1,0 +1,11 @@
+During an asthma attack, silence is not peaceful. It is the space where an inhale should be.
+
+I built Pause after noticing that my phone was better at selling me something than helping me care for myself. My first reminder said, “Don’t forget.” The code worked—but the design failed. I dismissed it with every other notification.
+
+So I changed the question: “Ready for a quick check?” I added choices: check now, choose a better moment, or say it is not needed today. Later is not failure. It is a plan to return.
+
+Pause also creates personal guides that gradually fade—from clear steps, to one hint, to trying independently.
+
+And instead of celebrating taps, Pause asks whether someone actually felt more prepared. Every insight is private, explainable, and stored on the device.
+
+I used to fear the pause between breaths. Now I want to build for the pauses in which someone decides what to do next.
